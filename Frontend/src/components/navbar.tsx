@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import {CircleUser,} from "lucide-react";
+import {CircleUser} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -11,11 +11,20 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Mock function to check if the user is logged in
+const isUserLoggedIn = () => {
+    // Replace with actual login status check logic
+    return false;
+};
+
 const Navbar: React.FC = () => {
+    const loggedIn = isUserLoggedIn();
+
     return (
         <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             <nav
-                className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+                className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6"
+            >
                 <Link href="/" className="flex items-center gap-2 text-lg font-semibold md:text-base">
                     <span className="text-xl">🚊</span>
                 </Link>
@@ -36,12 +45,25 @@ const Navbar: React.FC = () => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator/>
-                        <DropdownMenuItem>Settings</DropdownMenuItem>
-                        <DropdownMenuItem>Support</DropdownMenuItem>
-                        <DropdownMenuSeparator/>
-                        <DropdownMenuItem>Logout</DropdownMenuItem>
+                        {loggedIn ? (
+                            <>
+                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator/>
+                                <DropdownMenuItem>Settings</DropdownMenuItem>
+                                <DropdownMenuItem>Support</DropdownMenuItem>
+                                <DropdownMenuSeparator/>
+                                <DropdownMenuItem>Logout</DropdownMenuItem>
+                            </>
+                        ) : (
+                            <>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/login">Log In</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/register">Register</Link>
+                                </DropdownMenuItem>
+                            </>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
