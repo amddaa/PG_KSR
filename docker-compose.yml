@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./Frontend/
+    ports:
+      - "3000:3000"
+    depends_on:
+      - django
+
+  django:
+    build:
+      context: ./Backend/KSR/
+    ports:
+      - "8000:8000"
+    command: gunicorn KSR.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - ./Backend/KSR/.env.dev
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./Postgres/.env.dev
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "5050:80"
+    env_file:
+      - ./PgAdmin/.env.dev
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  pgadmin_data:
