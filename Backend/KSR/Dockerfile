@@ -1,11 +1,15 @@
 FROM python:3.11-slim
 
-WORKDIR /usr/src/app
+ENV PYTHONUNBUFFERED=1
 
-RUN pip install --upgrade pip
+WORKDIR /app
 
-COPY ./requirements.txt .
+COPY requirements.txt /app/
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -U python-dotenv==1.0.1
+RUN pip install -U psycopg2-binary==2.9.9
 
-COPY . .
+COPY . /app/
+
+EXPOSE 8000

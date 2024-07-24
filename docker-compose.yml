@@ -12,13 +12,14 @@ services:
   django:
     build:
       context: ./Backend/KSR/
-    ports:
-      - "8000:8000"
-    command: gunicorn KSR.wsgi:application --bind 0.0.0.0:8000
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn KSR.wsgi:application --bind 0.0.0.0:8000"
     env_file:
-      - ./Backend/KSR/.env.dev
+      - ./Backend/KSR/.env
+    volumes:
+      - static_volume:/app/staticfiles
     depends_on:
       - db
+      - rabbitmq
 
   db:
     image: postgres:16
@@ -26,6 +27,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - ./Postgres/.env.dev
+    ports:
+      - "5432:5432"
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -38,6 +41,25 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/staticfiles
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - django
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file:
+      - ./RabbitMQ/.env.dev
+
 volumes:
   postgres_data:
   pgadmin_data:
+  static_volume:
