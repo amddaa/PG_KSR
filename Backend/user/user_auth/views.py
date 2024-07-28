@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.db import transaction
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -18,7 +19,7 @@ def login(request):
 
     if user is not None:
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key})
+        return Response({'token': token.key}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -28,14 +29,17 @@ def register(request):
     serializer = UserSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    serializer.save()
 
-    user = User.objects.get(username=request.data['username'])
-    user.set_password(request.data['password'])
-    user.save()
+    try:
+        with transaction.atomic():
+            user = serializer.save()
+            user.set_password(request.data['password'])
+            user.save()
 
-    token = Token.objects.create(user=user)
-    return Response({'token': token.key, "user": serializer.data}, status=status.HTTP_201_CREATED)
+            token = Token.objects.create(user=user)
+            return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
