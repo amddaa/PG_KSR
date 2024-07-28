@@ -6,6 +6,8 @@ services:
       context: ./Frontend/
     ports:
       - "3000:3000"
+    volumes:
+      - ./Frontend/build:/usr/share/nginx/html
 
   user:
     build:
