@@ -6,15 +6,13 @@ services:
       context: ./Frontend/
     ports:
       - "3000:3000"
-    depends_on:
-      - django
 
-  django:
+  user:
     build:
-      context: ./Backend/KSR/
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn KSR.wsgi:application --bind 0.0.0.0:8000"
+      context: ./Backend/User/
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn User.wsgi:application --bind 0.0.0.0:8000"
     env_file:
-      - ./Backend/KSR/.env
+      - ./Backend/User/.env
     volumes:
       - static_volume:/app/staticfiles
     depends_on:
@@ -49,7 +47,7 @@ services:
       - static_volume:/staticfiles
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - django
+      - user
 
   rabbitmq:
     image: rabbitmq:3-management
