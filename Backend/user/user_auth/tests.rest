@@ -1,0 +1,25 @@
+### REGISTER
+POST http://127.0.0.1:80/register
+Content-Type: application/json
+
+{
+  "username": "adamm",
+  "password": "Pass1234!",
+  "email": "adam@mail.com"
+ }
+
+### LOGIN
+
+POST http://127.0.0.1:80/login
+Content-Type: application/json
+
+{
+  "username": "adamm",
+  "password": "Pass1234!"
+}
+
+### TEST_TOKEN
+
+GET http://127.0.0.1:80/test_token
+Content-Type: application/json
+Authorization: token 16b93fed0479ce7a014e85ef939821405dc94235
