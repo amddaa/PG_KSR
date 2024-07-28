@@ -1,5 +1,5 @@
 from django.contrib.auth import authenticate
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -13,9 +13,13 @@ from .serializers import UserSerializer
 
 @api_view(['POST'])
 def login(request):
-    username = request.data.get('username')
+    email = request.data.get('email')
     password = request.data.get('password')
-    user = authenticate(username=username, password=password)
+    try:
+        user = User.objects.get(email=email)
+        user = authenticate(username=user.username, password=password)
+    except User.DoesNotExist:
+        user = None
 
     if user is not None:
         token, created = Token.objects.get_or_create(user=user)
@@ -33,12 +37,9 @@ def register(request):
     try:
         with transaction.atomic():
             user = serializer.save()
-            user.set_password(request.data['password'])
-            user.save()
-
             token = Token.objects.create(user=user)
-            return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
-    except Exception as e:
+            return Response({'token': token.key, 'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+    except IntegrityError as e:
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

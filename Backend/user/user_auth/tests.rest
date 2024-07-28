@@ -1,16 +1,17 @@
 ### REGISTER
-POST http://127.0.0.1:80/register
+POST http://127.0.0.1:80/api/register
 Content-Type: application/json
 
 {
-  "username": "adamm",
+  "first_name": "adamm",
+  "last_name": "adamm",
   "password": "Pass1234!",
   "email": "adam@mail.com"
  }
 
 ### LOGIN
 
-POST http://127.0.0.1:80/login
+POST http://127.0.0.1:80/api/login
 Content-Type: application/json
 
 {
@@ -20,6 +21,6 @@ Content-Type: application/json
 
 ### TEST_TOKEN
 
-GET http://127.0.0.1:80/test_token
+GET http://127.0.0.1:80/api/test_token
 Content-Type: application/json
 Authorization: token 16b93fed0479ce7a014e85ef939821405dc94235
