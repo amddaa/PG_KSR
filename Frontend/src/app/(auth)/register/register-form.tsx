@@ -1,31 +1,47 @@
 "use client";
 
-import Link from 'next/link';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {FormEvent, useState} from "react";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
+import {z} from "zod";
+import {useState} from "react";
+
+import {Button} from "@/components/ui/button";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
 import {useRouter} from "next/navigation";
+import Link from "next/link";
+
+const formSchema = z.object({
+    first_name: z.string().min(1, {message: "First name is required"}),
+    last_name: z.string().min(1, {message: "Last name is required"}),
+    username: z.string().min(4, {message: "Username must be at least 4 characters"}).max(16, {message: "Username must be at most 16 characters"}),
+    email: z.string().email({message: "Invalid email address"}),
+    password: z.string().min(6, {message: "Password must be at least 6 characters"}),
+});
+
+type FormSchema = z.infer<typeof formSchema>;
 
 export function RegisterForm() {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
     const router = useRouter();
+    const [customError, setCustomError] = useState<string | null>(null);
+    const form = useForm<FormSchema>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            first_name: '',
+            last_name: '',
+            username: '',
+            email: '',
+            password: '',
+        },
+    });
 
-    const handleSubmit = async (event: FormEvent) => {
-        event.preventDefault();
-        setError('');
+    const onSubmit = async (data: FormSchema) => {
+        if (typeof window === 'undefined') {
+            return;
+        }
 
-        const userData = {
-            firstName,
-            lastName,
-            email,
-            password,
-        };
+        setCustomError(null);
 
         try {
             const response = await fetch('/api/register', {
@@ -33,88 +49,119 @@ export function RegisterForm() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(userData),
+                body: JSON.stringify(data),
             });
 
             if (response.ok) {
                 router.push('/login');
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || 'Registration failed');
+                setCustomError(errorData.message || 'Registration failed');
             }
         } catch (error) {
             if (error instanceof Error) {
-                setError('An unexpected error occurred: ' + error.message);
+                setCustomError('An unexpected error occurred: ' + error.message);
             } else {
-                setError('An unexpected error occurred');
+                setCustomError('An unexpected error occurred');
             }
         }
     };
 
     return (
         <Card className="mx-auto max-w-sm">
-            <form onSubmit={handleSubmit}>
-                <CardHeader>
-                    <CardTitle className="text-2xl">Sign Up</CardTitle>
-                    <CardDescription>
-                        Enter your information to create an account
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="first-name">First name</Label>
-                                <Input
-                                    id="first-name"
-                                    placeholder="John"
-                                    value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
-                                    required/>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <CardHeader className="pb-0">
+                        <CardTitle className="text-2xl">Sign Up</CardTitle>
+                        <CardDescription className="mb-4">
+                            Enter your information to create an account
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="grid gap-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="first_name"
+                                    render={({field}) => (
+                                        <FormItem>
+                                            <FormLabel>First name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="John" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="last_name"
+                                    render={({field}) => (
+                                        <FormItem>
+                                            <FormLabel>Last name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Doe" {...field} />
+                                            </FormControl>
+                                            <FormMessage/>
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="last-name">Last name</Label>
-                                <Input
-                                    id="last-name"
-                                    placeholder="Doe"
-                                    value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
-                                    required/>
-                            </div>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="john@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required/>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                            <FormField
+                                control={form.control}
+                                name="username"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormLabel>Username</FormLabel>
+                                        <FormControl>
+                                            <Input type="username" placeholder="john_doe" {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="john@example.com" type="email" {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormLabel>Password</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="******" type="password" {...field} />
+                                        </FormControl>
+                                        <FormMessage/>
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" className="w-full">
+                                Create an account
+                            </Button>
+                            {customError && (
+                                <p className="text-red-500">{customError}</p>
+                            )}
                         </div>
-                        {error && <div className="text-red-600">{error}</div>}
-                        <Button type="submit" className="w-full">
-                            Create an account
-                        </Button>
-                    </div>
-                    <div className="mt-4 text-center text-sm">
-                        Already have an account?{" "}
-                        <Link href="/login" className="underline">
-                            Sign in
-                        </Link>
-                    </div>
-                </CardContent>
-            </form>
+                        <div className="mt-4 text-center text-sm">
+                            Already have an account?{" "}
+                            <Link href="/login" className="underline">
+                                Sign in
+                            </Link>
+                        </div>
+                    </CardContent>
+                </form>
+            </Form>
         </Card>
     );
 }

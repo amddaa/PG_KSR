@@ -3,9 +3,10 @@ POST http://127.0.0.1:80/api/register
 Content-Type: application/json
 
 {
-  "first_name": "adamm",
-  "last_name": "adamm",
-  "password": "Pass1234!",
+  "first_name": "adam",
+  "last_name": "mada",
+  "username": "adam123",
+  "password": "adam123",
   "email": "adam@mail.com"
  }
 
@@ -15,8 +16,7 @@ POST http://127.0.0.1:80/api/login
 Content-Type: application/json
 
 {
-  "username": "adamm",
-  "password": "Pass1234!"
+  "password": "adam123"
 }
 
 ### TEST_TOKEN
