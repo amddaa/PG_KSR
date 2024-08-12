@@ -1,8 +1,9 @@
-from django.urls import re_path
+from django.urls import path
 from . import views
 
 urlpatterns = [
-    re_path("api/login", views.login, name="login"),
-    re_path("api/register", views.register, name="register"),
-    re_path("api/test_token", views.test_token, name="test_token"),
+    path("api/login", views.login, name="login"),
+    path("api/register", views.register, name="register"),
+    path("api/test_token", views.test_token, name="test_token"),
+    path("api/verify-email/<str:uidb64>/<str:token>/", views.verify_email, name="verify_email"),\
 ]

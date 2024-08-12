@@ -24,3 +24,8 @@ Content-Type: application/json
 GET http://127.0.0.1:80/api/test_token
 Content-Type: application/json
 Authorization: token 16b93fed0479ce7a014e85ef939821405dc94235
+
+### VERIFY_EMAIL
+
+GET http://127.0.0.1:80/api/verify-email/MQ/cblvwycb0f0b91b71f3cc078e0b0745af3072d/
+Content-Type: application/json
