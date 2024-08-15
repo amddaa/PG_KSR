@@ -1,31 +1,32 @@
 ### REGISTER
-POST http://127.0.0.1:80/api/register
+POST http://127.0.0.1:80/api/auth/register/
 Content-Type: application/json
 
 {
   "first_name": "adam",
-  "last_name": "mada",
-  "username": "adam123",
-  "password": "adam123",
-  "email": "adam@mail.com"
+  "last_name": "adam",
+  "username": "adamsss",
+  "password": "123456",
+  "email": "slusarekadam1@gmail.com"
  }
 
 ### LOGIN
 
-POST http://127.0.0.1:80/api/login
+POST http://127.0.0.1:80/api/auth/login/
 Content-Type: application/json
 
 {
-  "password": "adam123"
+  "email": "adamsss",
+  "username": "slusarekadam1@gmail.com",
+  "password": "123456"
 }
-
-### TEST_TOKEN
-
-GET http://127.0.0.1:80/api/test_token
-Content-Type: application/json
-Authorization: token 16b93fed0479ce7a014e85ef939821405dc94235
 
 ### VERIFY_EMAIL
 
 GET http://127.0.0.1:80/api/verify-email/MQ/cblvwycb0f0b91b71f3cc078e0b0745af3072d/
 Content-Type: application/json
+
+### VERIFY TOKEN
+
+GET http://127.0.0.1:80/api/auth/token/verify/
+Authorization: Bearer your-access-token

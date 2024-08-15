@@ -12,8 +12,8 @@ import {useRouter} from "next/navigation";
 import Link from "next/link";
 
 const formSchema = z.object({
-    email: z.string().email({message: "Invalid email address"}).optional(),
-    username: z.string().min(4, {message: "Username must be at least 4 characters"}).max(16, {message: "Username must be at most 16 characters"}).optional(),
+    email: z.string().email({message: "Invalid email address"}),
+    username: z.string().min(4, {message: "Username must be at least 4 characters"}).max(16, {message: "Username must be at most 16 characters"}),
     password: z.string().min(6, {message: "Password must be at least 6 characters"}),
 });
 
@@ -39,7 +39,7 @@ export function LoginForm() {
         setCustomError(null);
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/auth/login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -49,7 +49,8 @@ export function LoginForm() {
 
             if (response.ok) {
                 const responseData = await response.json();
-                localStorage.setItem('authToken', responseData.token);
+                localStorage.setItem('accessToken', responseData.access);
+                localStorage.setItem('refreshToken', responseData.refresh);
                 router.push('/');
             } else {
                 const errorData = await response.json();

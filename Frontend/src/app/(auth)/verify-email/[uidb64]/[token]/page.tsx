@@ -11,7 +11,7 @@ const VerifyEmailComponent = ({uidb64, token}: { uidb64: string; token: string; 
     useEffect(() => {
         const verifyEmail = async () => {
             try {
-                const response = await fetch(`/api/verify-email/${uidb64}/${token}/`, {
+                const response = await fetch(`/api/auth/verify-email/${uidb64}/${token}/`, {
                     method: 'GET',
                 });
                 const data = await response.json();

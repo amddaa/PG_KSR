@@ -9,17 +9,12 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import CustomUser
 from .serializers import UserSerializer
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -33,19 +28,22 @@ def login(request):
 
     try:
         user = CustomUser.objects.get(email=email, username=username)
+        authenticated_user = authenticate(request, username=user.username, password=password)
     except CustomUser.DoesNotExist:
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if not user.is_verified:
-        return Response({'error': 'Account is not verified. Please verify your email first.'}, status=status.HTTP_403_FORBIDDEN)
-
-    user = authenticate(username=username, password=password)
-
-    if user is not None:
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_200_OK)
-    else:
+    if authenticated_user is None:
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not authenticated_user.is_verified:
+        return Response({'error': 'Account is not verified. Please verify your email first.'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    refresh = RefreshToken.for_user(authenticated_user)
+    return Response({
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -57,16 +55,24 @@ def register(request):
     try:
         with transaction.atomic():
             user = serializer.save()
-            token = Token.objects.create(user=user)
+
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
             send_verification_email(request, user)
-            return Response({'token': token.key, 'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+
+            return Response({
+                'refresh': refresh_token,
+                'access': access_token,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
     except IntegrityError as e:
         return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
 def verify_email(request, uidb64, token):
-    print(uidb64, token)
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
@@ -86,7 +92,7 @@ def send_verification_email(request, user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     current_site = get_current_site(request)
     verification_link = reverse('verify_email', kwargs={'uidb64': uid, 'token': token})
-    verification_url = f"http://{current_site.domain}{verification_link[4:]}"
+    verification_url = f"http://{current_site.domain}{verification_link[9:]}"
     subject = 'Verify your email'
 
     message = render_to_string('user_auth/verification_email.html', {
@@ -103,10 +109,3 @@ def send_verification_email(request, user):
 
     email.attach_alternative(message, "text/html")
     email.send()
-
-
-@api_view(['GET'])
-@authentication_classes([SessionAuthentication, TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def test_token(request):
-    return Response({"Successful pass for {}".format(request.user.email)}, status=status.HTTP_200_OK)
