@@ -53,7 +53,7 @@ export function RegisterForm() {
             });
 
             if (response.ok) {
-                router.push('/login');
+                router.push('/confirmation');
             } else {
                 const errorData = await response.json();
                 setCustomError(errorData.message || 'Registration failed');
