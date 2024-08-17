@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 from .models import CustomUser
 
 
@@ -13,6 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        if CustomUser.objects.filter(email=validated_data['email']).exists():
+            raise ValidationError({'email': 'This email is already taken.'})
+
+        if CustomUser.objects.filter(username=validated_data['username']).exists():
+            raise ValidationError({'username': 'This username is already taken.'})
+
         user = CustomUser(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
@@ -24,10 +32,18 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        instance.email = validated_data.get('email', instance.email)
+        if 'email' in validated_data and validated_data['email'] != instance.email:
+            if CustomUser.objects.filter(email=validated_data['email']).exists():
+                raise ValidationError({'email': 'This email is already taken.'})
+            instance.email = validated_data['email']
+
+        if 'username' in validated_data and validated_data['username'] != instance.username:
+            if CustomUser.objects.filter(username=validated_data['username']).exists():
+                raise ValidationError({'username': 'This username is already taken.'})
+            instance.username = validated_data['username']
+
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
-        instance.username = validated_data.get('username', instance.username)
         password = validated_data.get('password', None)
         if password:
             instance.set_password(password)

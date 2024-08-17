@@ -56,7 +56,7 @@ export function RegisterForm() {
                 router.push('/confirmation');
             } else {
                 const errorData = await response.json();
-                setCustomError(errorData.message || 'Registration failed');
+                setCustomError(errorData.error || errorData.username || errorData.email || 'Registration failed');
             }
         } catch (error) {
             if (error instanceof Error) {

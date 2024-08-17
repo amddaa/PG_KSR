@@ -10,6 +10,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer
@@ -29,10 +30,11 @@ def register(request):
         with transaction.atomic():
             user = serializer.save()
             send_verification_email(request, user)
-
-            return Response({'error': 'User registered successfully!'}, status=status.HTTP_200_OK)
+            return Response({'message': 'User registered successfully!'}, status=status.HTTP_201_CREATED)
     except IntegrityError as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except ValidationError as e:
+        return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -46,7 +48,7 @@ def verify_email(request, uidb64, token):
     if user is not None and default_token_generator.check_token(user, token):
         user.is_verified = True
         user.save()
-        return Response({'error': 'Email verified successfully!'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Email verified successfully!'}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Invalid verification link'}, status=status.HTTP_400_BAD_REQUEST)
 
