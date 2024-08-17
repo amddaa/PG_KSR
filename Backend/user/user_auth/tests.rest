@@ -12,12 +12,12 @@ Content-Type: application/json
 
 ### LOGIN
 
-POST http://127.0.0.1:80/api/auth/login/
+POST http://127.0.0.1:80/api/auth/token/
 Content-Type: application/json
 
 {
-  "email": "adamsss",
-  "username": "slusarekadam1@gmail.com",
+  "username": "adamslu",
+  "email": "slusarekadam1@gmail.com",
   "password": "123456"
 }
 
@@ -26,7 +26,3 @@ Content-Type: application/json
 GET http://127.0.0.1:80/api/verify-email/MQ/cblvwycb0f0b91b71f3cc078e0b0745af3072d/
 Content-Type: application/json
 
-### VERIFY TOKEN
-
-GET http://127.0.0.1:80/api/auth/token/verify/
-Authorization: Bearer your-access-token

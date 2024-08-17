@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import {CircleUser} from "lucide-react";
@@ -10,15 +12,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Mock function to check if the user is logged in
-const isUserLoggedIn = () => {
-    // Replace with actual login status check logic
-    return false;
-};
+import {useUser} from '@/context/user-context';
 
 const Navbar: React.FC = () => {
-    const loggedIn = isUserLoggedIn();
+    const {isLoggedIn, logout} = useUser();
 
     return (
         <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -45,14 +42,16 @@ const Navbar: React.FC = () => {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        {loggedIn ? (
+                        {isLoggedIn ? (
                             <>
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuLabel>
+                                    <Link href="/profile">Profile</Link>
+                                </DropdownMenuLabel>
                                 <DropdownMenuSeparator/>
                                 <DropdownMenuItem>Settings</DropdownMenuItem>
                                 <DropdownMenuItem>Support</DropdownMenuItem>
                                 <DropdownMenuSeparator/>
-                                <DropdownMenuItem>Logout</DropdownMenuItem>
+                                <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
                             </>
                         ) : (
                             <>

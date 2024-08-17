@@ -10,6 +10,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Input} from "@/components/ui/input";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
+import {useUser} from "@/context/user-context";
 
 const formSchema = z.object({
     email: z.string().email({message: "Invalid email address"}),
@@ -20,6 +21,7 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 export function LoginForm() {
+    const {login} = useUser();
     const router = useRouter();
     const [customError, setCustomError] = useState<string | null>(null);
     const form = useForm<FormSchema>({
@@ -32,36 +34,14 @@ export function LoginForm() {
     });
 
     const onSubmit: SubmitHandler<FormSchema> = async (data) => {
-        if (typeof window === 'undefined') {
-            return;
-        }
-
         setCustomError(null);
 
-        try {
-            const response = await fetch('/api/auth/login/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
+        const response = await login(data);
 
-            if (response.ok) {
-                const responseData = await response.json();
-                localStorage.setItem('accessToken', responseData.access);
-                localStorage.setItem('refreshToken', responseData.refresh);
-                router.push('/');
-            } else {
-                const errorData = await response.json();
-                setCustomError(errorData.error || 'Login failed');
-            }
-        } catch (error) {
-            if (error instanceof Error) {
-                setCustomError('An unexpected error occurred: ' + error.message);
-            } else {
-                setCustomError('An unexpected error occurred');
-            }
+        if (response.ok) {
+            router.push('/');
+        } else {
+            setCustomError(response.error || 'Login failed');
         }
     };
 

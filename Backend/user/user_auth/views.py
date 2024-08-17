@@ -11,39 +11,12 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView
 
 from .models import CustomUser
 from .serializers import UserSerializer
-
-
-@api_view(['POST'])
-def login(request):
-    email = request.data.get('email')
-    username = request.data.get('username')
-    password = request.data.get('password')
-
-    if not email or not username or not password:
-        return Response({'error': 'Email, username, and password are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        user = CustomUser.objects.get(email=email, username=username)
-        authenticated_user = authenticate(request, username=user.username, password=password)
-    except CustomUser.DoesNotExist:
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    if authenticated_user is None:
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
-    if not authenticated_user.is_verified:
-        return Response({'error': 'Account is not verified. Please verify your email first.'},
-                        status=status.HTTP_403_FORBIDDEN)
-
-    refresh = RefreshToken.for_user(authenticated_user)
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -55,20 +28,11 @@ def register(request):
     try:
         with transaction.atomic():
             user = serializer.save()
-
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-
             send_verification_email(request, user)
 
-            return Response({
-                'refresh': refresh_token,
-                'access': access_token,
-                'user': UserSerializer(user).data
-            }, status=status.HTTP_201_CREATED)
+            return Response({'error': 'User registered successfully!'}, status=status.HTTP_200_OK)
     except IntegrityError as e:
-        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -82,9 +46,9 @@ def verify_email(request, uidb64, token):
     if user is not None and default_token_generator.check_token(user, token):
         user.is_verified = True
         user.save()
-        return Response({'detail': 'Email verified successfully!'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Email verified successfully!'}, status=status.HTTP_200_OK)
     else:
-        return Response({'detail': 'Invalid verification link'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid verification link'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def send_verification_email(request, user):
@@ -109,3 +73,74 @@ def send_verification_email(request, user):
 
     email.attach_alternative(message, "text/html")
     email.send()
+
+
+# https://github.com/jazzband/djangorestframework-simplejwt/issues/71#issuecomment-762927394
+class CookieTokenRefreshSerializer(TokenRefreshSerializer):
+    refresh = None
+
+    def validate(self, attrs):
+        attrs['refresh'] = self.context['request'].COOKIES.get('refresh')
+        if attrs['refresh']:
+            return super().validate(attrs)
+        else:
+            raise InvalidToken('No valid token found in cookie \'refresh\'')
+
+
+class CookieTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not email or not username or not password:
+            return Response({'error': 'Email, username, and password are required'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(email=email, username=username)
+            authenticated_user = authenticate(request, username=user.username, password=password)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if authenticated_user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not authenticated_user.is_verified:
+            return Response({'error': 'Account is not verified. Please verify your email first.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        return super().post(request, *args, **kwargs)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.status_code == status.HTTP_200_OK and response.data.get('refresh'):
+            cookie_max_age = 3600 * 24 * 14
+            response.set_cookie('refresh', response.data['refresh'], max_age=cookie_max_age, httponly=True)
+            del response.data['refresh']
+        return super().finalize_response(request, response, *args, **kwargs)
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.data.get('refresh'):
+            cookie_max_age = 3600 * 24 * 14
+            response.set_cookie('refresh', response.data['refresh'], max_age=cookie_max_age, httponly=True)
+            del response.data['refresh']
+        return super().finalize_response(request, response, *args, **kwargs)
+
+    serializer_class = CookieTokenRefreshSerializer
+
+
+class CookieTokenBlacklistSerializer(TokenBlacklistSerializer):
+    refresh = None
+
+    def validate(self, attrs):
+        attrs['refresh'] = self.context['request'].COOKIES.get('refresh')
+        if attrs['refresh']:
+            return super().validate(attrs)
+        else:
+            raise InvalidToken('No valid token found in cookie \'refresh\'')
+
+
+class CookieTokenBlacklistView(TokenBlacklistView):
+    serializer_class = CookieTokenBlacklistSerializer

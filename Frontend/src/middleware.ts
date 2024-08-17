@@ -2,12 +2,12 @@ import type {NextRequest} from 'next/server';
 import {NextResponse} from 'next/server';
 
 export function middleware(req: NextRequest) {
-    const token = req.cookies.get('accessToken');
+    const refresh_token = req.cookies.get('refresh');
 
-    const protectedRoutes = ['/dashboard', '/profile']; //TODO
+    const protectedRoutes = ['/profile'];
 
     if (protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
-        if (!token) {
+        if (!refresh_token) {
             return NextResponse.redirect(new URL('/login', req.url));
         }
     }
