@@ -1,5 +1,5 @@
 export const loginUser = async (credentials: { email: string; username: string; password: string }) => {
-    const response = await fetch('/api/auth/token/', {
+    const response = await fetch('/api/user/auth/token/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -19,7 +19,7 @@ export const loginUser = async (credentials: { email: string; username: string; 
 };
 
 export const refreshAccessToken = async () => {
-    const response = await fetch('/api/auth/token/refresh/', {
+    const response = await fetch('/api/user/auth/token/refresh/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ export const refreshAccessToken = async () => {
 export const logoutUser = async () => {
     if (typeof window !== 'undefined') {
         try {
-            await fetch('/api/auth/token/blacklist/', {
+            await fetch('/api/user/auth/token/blacklist/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

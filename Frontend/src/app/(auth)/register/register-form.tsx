@@ -44,7 +44,7 @@ export function RegisterForm() {
         setCustomError(null);
 
         try {
-            const response = await fetch('/api/auth/register/', {
+            const response = await fetch('/api/user/auth/register/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
