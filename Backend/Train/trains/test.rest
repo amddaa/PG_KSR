@@ -1,0 +1,52 @@
+### Healthcheck
+GET http://127.0.0.1:80/api/trains/health/
+Accept: application/json
+
+###
+
+### List Train Schedules
+GET http://127.0.0.1:80/trains/
+Accept: application/json
+
+###
+
+### Create Train Schedule
+POST http://localhost:8001/trains/
+Content-Type: application/json
+
+{
+    "train_number": "1234",
+    "departure_time": "2024-10-01T10:00:00Z",
+    "arrival_time": "2024-10-01T14:00:00Z",
+    "available_seats": 100
+}
+
+###
+
+### Get Train Schedule Details
+GET http://localhost:8001/trains/1/
+Accept: application/json
+
+###
+
+### Update Train Schedule
+PUT http://localhost:8001/trains/1/
+Content-Type: application/json
+
+{
+    "available_seats": 90
+}
+
+###
+
+### Delete Train Schedule
+DELETE http://localhost:8001/trains/1/
+Accept: application/json
+
+###
+
+### Search Train Schedules
+GET http://localhost:8001/trains/search/?departure_time=2024-10-01T10:00:00Z&arrival_time=2024-10-01T14:00:00Z
+Accept: application/json
+
+###
