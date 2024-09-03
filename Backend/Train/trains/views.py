@@ -3,9 +3,9 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 
-from train.trains.events.handlers import TrainEventHandler
-from train.trains.models import TrainSchedule
-from train.trains.serializers import TrainScheduleSerializer
+from .events.handlers import TrainEventHandler
+from .models import TrainSchedule
+from .serializers import TrainScheduleSerializer
 
 event_publisher = TrainEventHandler()
 

@@ -3,13 +3,11 @@ from esdbclient import EventStoreDBClient, NewEvent, StreamState
 from django.conf import settings
 from rest_framework.utils import json
 
-from train.train.settings import ESDB_HOST, ESDB_PORT
-
 
 class TrainEventHandler:
     def __init__(self):
         self.rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
-        self.client = EventStoreDBClient(uri=f"esdb://{ESDB_HOST}:{ESDB_PORT}?Tls=false")
+        self.client = EventStoreDBClient(uri=f"esdb://{settings.ESDB_HOST}:{settings.ESDB_PORT}?Tls=false")
 
     def publish_event(self, event_type, data, stream_name):
         event = NewEvent(type=event_type, data=data)

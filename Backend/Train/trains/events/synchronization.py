@@ -1,7 +1,7 @@
 import pika
 import json
 from django.db import transaction
-from train.trains.models import TrainSchedule
+from ..models import TrainSchedule
 
 
 def update_read_model(properties, body):

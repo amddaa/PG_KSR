@@ -7,7 +7,6 @@ from rest_framework.utils import json
 class EventProcessor:
     def __init__(self):
         esdb_uri = f"esdb://{settings.ESDB_HOST}:{settings.ESDB_PORT}?Tls=false"
-        rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
         credentials = pika.PlainCredentials(settings.RABBITMQ_USER, settings.RABBITMQ_PASSWORD)
         parameters = pika.ConnectionParameters(settings.RABBITMQ_HOST,
                                                settings.RABBITMQ_PORT,
@@ -15,7 +14,6 @@ class EventProcessor:
                                                credentials)
 
         self.esdb_client = EventStoreDBClient(uri=esdb_uri)
-
         try:
             self.rabbitmq_connection = pika.BlockingConnection(parameters)
             self.rabbitmq_channel = self.rabbitmq_connection.channel()

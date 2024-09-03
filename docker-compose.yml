@@ -37,8 +37,10 @@ services:
     volumes:
       - static_volume:/app/staticfiles
     depends_on:
-      - rabbitmq
-      - eventstore
+      rabbitmq:
+        condition: service_healthy
+      eventstore:
+        condition: service_started
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -69,6 +71,11 @@ services:
       - "15672:15672"
     env_file:
       - ./RabbitMQ/.env.dev
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
       
   eventstore:
     image: eventstore/eventstore:24.6

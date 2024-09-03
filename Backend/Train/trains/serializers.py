@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from train.trains.models import TrainSchedule
+from .models import TrainSchedule
 
 
 class TrainScheduleSerializer(serializers.ModelSerializer):

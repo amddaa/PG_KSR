@@ -1,7 +1,6 @@
 from django.db import models
 from dj_cqrs.mixins import MasterMixin
-
-from train.trains.events.handlers import TrainEventHandler
+from .events.handlers import TrainEventHandler
 
 
 class TrainSchedule(MasterMixin, models.Model):
@@ -12,16 +11,17 @@ class TrainSchedule(MasterMixin, models.Model):
     arrival_time = models.DateTimeField()
 
     class Meta:
-        db_table = 'train_schedule'
+        app_label = "trains"
+        db_table = "train_schedule"
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
 
         event_handler = TrainEventHandler()
         event_data = {
-            'train_number': self.train_number,
-            'departure_time': self.departure_time.isoformat(),
-            'arrival_time': self.arrival_time.isoformat(),
+            "train_number": self.train_number,
+            "departure_time": self.departure_time.isoformat(),
+            "arrival_time": self.arrival_time.isoformat(),
         }
 
         if is_new:

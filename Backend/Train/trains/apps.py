@@ -9,4 +9,4 @@ class TrainsConfig(AppConfig):
 
     def ready(self):
         processor = EventProcessor()
-        threading.Thread(target=processor.start).start()
+        threading.Thread(target=processor.start, daemon=True).start()

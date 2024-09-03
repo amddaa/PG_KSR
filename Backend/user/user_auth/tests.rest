@@ -1,5 +1,5 @@
 ### REGISTER
-POST http://127.0.0.1:80/api/auth/register/
+POST http://127.0.0.1:80/api/user/auth/register/
 Content-Type: application/json
 
 {
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 ### LOGIN
 
-POST http://127.0.0.1:80/api/auth/token/
+POST http://127.0.0.1:80/api/user/auth/token/
 Content-Type: application/json
 
 {
