@@ -15,26 +15,19 @@ def healthcheck(request):
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
-def get_train_list(request):
-    schedules = TrainSchedule.objects.all()
-    serializer = TrainScheduleSerializer(schedules, many=True)
-    return Response(serializer.data)
+@api_view(['GET', 'POST'])
+def train_schedules(request):
+    if request.method == 'GET':
+        schedules = TrainSchedule.objects.all()
+        serializer = TrainScheduleSerializer(schedules, many=True)
+        return Response(serializer.data)
 
-
-@api_view(['POST'])
-def create_train_schedule(request):
-    serializer = TrainScheduleSerializer(data=request.data)
-    if serializer.is_valid():
-        schedule = serializer.save()
-        event_data = {
-            'train_number': schedule.train_number,
-            'departure_time': schedule.departure_time.isoformat(),
-            'arrival_time': schedule.arrival_time.isoformat(),
-        }
-        event_publisher.publish_event('TrainScheduleCreated', event_data, 'train-schedule-stream')
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'POST':
+        serializer = TrainScheduleSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

@@ -1,28 +1,27 @@
 import pika
-from esdbclient import EventStoreDBClient, NewEvent, StreamState
 from django.conf import settings
 from rest_framework.utils import json
 
 
 class TrainEventHandler:
     def __init__(self):
-        self.rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
-        self.client = EventStoreDBClient(uri=f"esdb://{settings.ESDB_HOST}:{settings.ESDB_PORT}?Tls=false")
+        rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
+        self.rabbitmq_connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_uri))
+        self.rabbitmq_channel = self.rabbitmq_connection.channel()
+        self.rabbitmq_channel.exchange_declare(exchange='events', exchange_type='fanout')
 
-    def publish_event(self, event_type, data, stream_name):
-        event = NewEvent(type=event_type, data=data)
-        self.client.append_to_stream(stream_name=stream_name, events=[event], current_version=StreamState.ANY)
-
-        connection = pika.BlockingConnection(pika.URLParameters(self.rabbitmq_uri))
-        channel = connection.channel()
-        channel.exchange_declare(exchange='events', exchange_type='fanout')
-
-        channel.basic_publish(
+    def publish_event(self, event_type, event_data, stream_name):
+        message = {
+            'event_type': event_type,
+            'stream_name': stream_name,
+            'data': event_data,
+        }
+        self.rabbitmq_channel.basic_publish(
             exchange='events',
             routing_key='',
-            body=json.dumps(data),
-            properties=pika.BasicProperties(headers={'event_type': event_type})
+            body=json.dumps(message)
         )
 
     def close(self):
-        self.client.close()
+        if self.rabbitmq_connection:
+            self.rabbitmq_connection.close()

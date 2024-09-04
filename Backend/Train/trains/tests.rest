@@ -5,13 +5,13 @@ Accept: application/json
 ###
 
 ### List Train Schedules
-GET http://127.0.0.1:80/trains/
+GET http://127.0.0.1:80/api/trains/
 Accept: application/json
 
 ###
 
 ### Create Train Schedule
-POST http://localhost:8001/trains/
+POST http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
@@ -24,13 +24,13 @@ Content-Type: application/json
 ###
 
 ### Get Train Schedule Details
-GET http://localhost:8001/trains/1/
+GET http://127.0.0.1:80/api/trains/1/
 Accept: application/json
 
 ###
 
 ### Update Train Schedule
-PUT http://localhost:8001/trains/1/
+PUT http://127.0.0.1:80/api/trains/1/
 Content-Type: application/json
 
 {
@@ -40,13 +40,13 @@ Content-Type: application/json
 ###
 
 ### Delete Train Schedule
-DELETE http://localhost:8001/trains/1/
+DELETE http://127.0.0.1:80/api/trains/1/
 Accept: application/json
 
 ###
 
 ### Search Train Schedules
-GET http://localhost:8001/trains/search/?departure_time=2024-10-01T10:00:00Z&arrival_time=2024-10-01T14:00:00Z
+GET http://127.0.0.1:80/api/trains/search/?departure_time=2024-10-01T10:00:00Z&arrival_time=2024-10-01T14:00:00Z
 Accept: application/json
 
 ###
