@@ -17,8 +17,7 @@ Content-Type: application/json
 {
     "train_number": "1234",
     "departure_time": "2024-10-01T10:00:00Z",
-    "arrival_time": "2024-10-01T14:00:00Z",
-    "available_seats": 100
+    "arrival_time": "2024-10-01T14:00:00Z"
 }
 
 ###

@@ -12,7 +12,7 @@ class TrainEventHandler:
         self.rabbitmq_channel = self.rabbitmq_connection.channel()
         self.rabbitmq_channel.exchange_declare(exchange='events', exchange_type='topic')
 
-    def publish_event(self, event_type, event_data, stream_name):
+    def publish_event(self, stream_name, event_type, event_data):
         event_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
 

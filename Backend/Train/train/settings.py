@@ -138,10 +138,25 @@ RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT"))
 RABBITMQ_USER = os.environ.get("RABBITMQ_USER")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
 
-CQRS = {
-    'transport': 'dj_cqrs.transport.rabbit_mq.RabbitMQTransport',
-    'host': RABBITMQ_HOST,
-    'port': RABBITMQ_PORT,
-    'user': RABBITMQ_USER,
-    'password': RABBITMQ_PASSWORD,
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'train': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
 }
