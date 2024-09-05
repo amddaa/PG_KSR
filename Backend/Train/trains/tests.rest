@@ -15,9 +15,9 @@ POST http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
-    "train_number": "1234",
-    "departure_time": "2024-10-01T10:00:00Z",
-    "arrival_time": "2024-10-01T14:00:00Z"
+    "train_number": "123457",
+    "departure_time": "2024-11-03T10:00:00Z",
+    "arrival_time": "2024-11-04T14:00:00Z"
 }
 
 ###

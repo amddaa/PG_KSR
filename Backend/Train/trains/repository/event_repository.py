@@ -26,6 +26,9 @@ class TrainEventRepository:
 
     def read_events(self, stream_name):
         try:
-            return self.esdb_client.read_stream(stream_name=stream_name, from_version=0)
+            return self.esdb_client.get_stream(stream_name=stream_name)
+        except Exception as e:
+            logger.error(f"Error while reading stream {stream_name}: {e}")
+            return []
         finally:
             self.esdb_client.close()
