@@ -32,8 +32,22 @@ class TrainCommandService:
             if event.type == TrainEventType.TRAIN_SCHEDULE_CREATED.value:
                 train_schedules[train_number] = train_schedules.get(train_number, [])
                 train_schedules[train_number].append((departure_time, arrival_time))
+
             elif event.type == TrainEventType.TRAIN_SCHEDULE_UPDATED.value:
-                raise NotImplementedError
+                old_departure_time = datetime.fromisoformat(event_data.get('old_departure_time'))
+                old_arrival_time = datetime.fromisoformat(event_data.get('old_arrival_time'))
+                new_departure_time = departure_time
+                new_arrival_time = arrival_time
+
+                if train_number not in train_schedules:
+                    logger.error("Couldn't find TrainSchedule to be updated")
+                    continue
+
+                for i, (existing_departure_time, existing_arrival_time) in enumerate(train_schedules[train_number]):
+                    if existing_departure_time == old_departure_time and existing_arrival_time == old_arrival_time:
+                        train_schedules[train_number][i] = (new_departure_time, new_arrival_time)
+                        break
+
             elif event.type == TrainEventType.TRAIN_SCHEDULE_DELETED.value:
                 raise NotImplementedError
 
@@ -44,11 +58,42 @@ class TrainCommandService:
 
         if train_number in current_schedules:
             for existing_departure_time, existing_arrival_time in current_schedules[train_number]:
-                logger.info(existing_departure_time, existing_arrival_time)
                 if existing_departure_time <= departure_time <= existing_arrival_time:
                     return False
                 if existing_departure_time <= arrival_time <= existing_arrival_time:
                     return False
+        return True
+
+    def can_update_schedule(self, train_number, old_departure_time, old_arrival_time, departure_time, arrival_time):
+        current_schedules = self.get_current_train_schedules()
+
+        if train_number not in current_schedules:
+            logger.info("Didn't find train number to update")
+            return False
+
+        found_schedule_to_update = False
+        for i in range(len(current_schedules[train_number])):
+            d = current_schedules[train_number][i][0]
+            a = current_schedules[train_number][i][1]
+            if d == old_departure_time and a == old_arrival_time:
+                current_schedules[train_number].pop(i)
+                found_schedule_to_update = True
+                break
+
+        if not found_schedule_to_update:
+            logger.info("Didn't find candidate to update")
+            return False
+
+        for existing_departure_time, existing_arrival_time in current_schedules[train_number]:
+            if existing_departure_time <= departure_time <= existing_arrival_time:
+                logger.info(
+                    f"Departure time overlap {existing_departure_time} <= {departure_time} <= {existing_arrival_time}")
+                return False
+            if existing_departure_time <= arrival_time <= existing_arrival_time:
+                logger.info(
+                    f"Arrival time overlap {existing_departure_time} <= {arrival_time} <= {existing_arrival_time}")
+                return False
+
         return True
 
     def _save_to_eventstore_and_publish_event(self, stream_name, event_type, event_data):
@@ -66,19 +111,13 @@ class TrainCommandService:
         }
         self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_CREATED.value, event_data)
 
-    def update_train_schedule(self, train_number, departure_time, arrival_time):
+    def update_train_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time):
         event_data = {
             "train_number": train_number,
-            "departure_time": departure_time.isoformat(),
-            "arrival_time": arrival_time.isoformat(),
+            "departure_time": new_departure_time.isoformat(),
+            "arrival_time": new_arrival_time.isoformat(),
+            "old_departure_time": old_departure_time.isoformat(),
+            "old_arrival_time": old_arrival_time.isoformat(),
         }
         self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_UPDATED.value, event_data)
-
-    def delete_train_schedule(self, train_number, departure_time):
-        event_data = {
-            "train_number": train_number,
-            "departure_time": departure_time.isoformat(),
-        }
-        self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_DELETED.value, event_data)
-
 
