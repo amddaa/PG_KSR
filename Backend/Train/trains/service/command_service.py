@@ -3,11 +3,10 @@ from datetime import datetime
 import logging
 
 from rest_framework.utils import json
-from esdbclient import RecordedEvent
 
-from ..events.handlers import TrainEventHandler
+from ..events.event_handler import TrainEventHandler
 from ..repository.event_repository import TrainEventRepository
-from ..events.event_types import TrainEventType
+from ..events.event_types import TrainEventType, TrainEventStreamName
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ class TrainCommandService:
     def __init__(self):
         self.event_repository = TrainEventRepository()
         self.event_handler = TrainEventHandler()
-        self.stream_name = 'train-schedule-stream'
+        self.stream_name = str(TrainEventStreamName.TRAIN_EVENT_STREAM_NAME)
 
     def get_current_train_schedules(self):
         events = self.event_repository.read_events(self.stream_name)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TrainSchedule
+from .models import TrainScheduleCommand
 
 
 class TrainScheduleSerializer(serializers.Serializer):
@@ -13,7 +13,7 @@ class TrainScheduleSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        return TrainSchedule(**validated_data)
+        return TrainScheduleCommand(**validated_data)
 
     def update(self, instance, validated_data):
         instance.train_number = validated_data.get('train_number', instance.train_number)

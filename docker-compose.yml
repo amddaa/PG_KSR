@@ -16,15 +16,15 @@ services:
     volumes:
       - static_volume:/app/staticfiles
     depends_on:
-      - db
+      - db_user
       - rabbitmq
 
-  db:
+  db_user:
     image: postgres:16
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_user_data:/var/lib/postgresql/data
     env_file:
-      - ./Postgres/.env.dev
+      - ./PostgresUser/.env.dev
     ports:
       - "5432:5432"
       
@@ -41,7 +41,18 @@ services:
         condition: service_healthy
       eventstore:
         condition: service_started
+      db_train:
+        condition: service_started
 
+  db_train:
+    image: postgres:16
+    volumes:
+      - db_train_data:/var/lib/postgresql/data
+    env_file:
+      - ./PostgresTrain/.env.dev      
+    ports:
+      - "5433:5432"
+        
   pgadmin:
     image: dpage/pgadmin4:latest
     ports:
@@ -49,7 +60,7 @@ services:
     env_file:
       - ./PgAdmin/.env.dev
     depends_on:
-      - db
+      - db_user
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
@@ -97,8 +108,9 @@ services:
         target: /var/log/eventstore
 
 volumes:
-  postgres_data:
+  db_user_data:
   pgadmin_data:
   static_volume:
   eventstore-volume-data:
   eventstore-volume-logs:
+  db_train_data:
