@@ -58,7 +58,7 @@ def send_verification_email(request, user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     current_site = get_current_site(request)
     verification_link = reverse('verify_email', kwargs={'uidb64': uid, 'token': token})
-    verification_url = f"http://{current_site.domain}{verification_link[9:]}"
+    verification_url = f"http://{current_site.domain}{verification_link[5:]}"
     subject = 'Verify your email'
 
     message = render_to_string('user_auth/verification_email.html', {
