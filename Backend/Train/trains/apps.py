@@ -6,10 +6,11 @@ from .service.query_service import TrainQueryService
 
 class TrainsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "train"
+    name = "trains"
 
     def ready(self):
         repository = TrainReadRepository()
         service = TrainQueryService(repository)
         event_processor = EventProcessor(service)
         event_processor.start()
+        pass

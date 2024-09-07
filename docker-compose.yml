@@ -87,6 +87,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
       
   eventstore:
     image: eventstore/eventstore:24.6
@@ -114,3 +116,4 @@ volumes:
   eventstore-volume-data:
   eventstore-volume-logs:
   db_train_data:
+  rabbitmq_data:

@@ -6,7 +6,7 @@ import logging
 from django.conf import settings
 from rest_framework.utils import json
 
-from .event_types import TrainEventType, TrainEventStreamName
+from .event_types import TrainEventType, TrainEventBrokerNames
 from ..service.query_service import TrainQueryService
 
 logging.basicConfig(level=logging.INFO)
@@ -23,13 +23,15 @@ class EventProcessor(threading.Thread):
             rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
             self.rabbitmq_connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_uri))
             self.rabbitmq_channel = self.rabbitmq_connection.channel()
-            self.rabbitmq_channel.exchange_declare(exchange='events', exchange_type='topic')
+            self.rabbitmq_channel.exchange_declare(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
+                                                   exchange_type='direct',
+                                                   durable=True)
+            self.rabbitmq_channel.queue_declare(queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
+                                                durable=True)
+            self.rabbitmq_channel.queue_bind(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
+                                             queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
+                                             routing_key=TrainEventBrokerNames.TRAIN_EVENT_ROUTING_KEY.value)
 
-            self.queue_name = 'train_event_processor_queue'
-            self.rabbitmq_channel.queue_declare(queue=self.queue_name)
-
-            routing_key_pattern = "#." + str(TrainEventStreamName.TRAIN_EVENT_STREAM_NAME)
-            self.rabbitmq_channel.queue_bind(exchange='events', queue=self.queue_name, routing_key=routing_key_pattern)
             logger.info("EventProcessor initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize EventProcessor: {e}")
@@ -38,9 +40,9 @@ class EventProcessor(threading.Thread):
         try:
             logger.info("EventProcessor starting to consume events")
             self.rabbitmq_channel.basic_consume(
-                queue=self.queue_name,
+                queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
                 on_message_callback=self.process_event,
-                auto_ack=True
+                auto_ack=False
             )
             self.rabbitmq_channel.start_consuming()
         except Exception as e:
@@ -52,14 +54,20 @@ class EventProcessor(threading.Thread):
                 self.rabbitmq_connection.close()
             logger.info("EventProcessor stopped")
 
-    def process_event(self, body):
+    def process_event(self, ch, method, properties, body):
         try:
             event = json.loads(body)
-            event_type = event.get('event_type')
+            event_type_str = event.get('event_type')
             event_data = event.get('data')
 
-            logger.info(f"Processing event: {event_type}")
+            try:
+                event_type = TrainEventType(event_type_str)
+            except ValueError:
+                logger.warning(f"Unknown event type: {event_type_str}")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+                return
 
+            logger.info(f"Processing event: {event_type}")
             if event_type == TrainEventType.TRAIN_SCHEDULE_CREATED:
                 self._handle_train_schedule_created(event_data)
             elif event_type == TrainEventType.TRAIN_SCHEDULE_UPDATED:
@@ -68,8 +76,11 @@ class EventProcessor(threading.Thread):
                 self._handle_train_schedule_deleted(event_data)
             else:
                 logger.warning(f"Unknown event type: {event_type}")
+
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as e:
             logger.error(f"Error processing event: {e}")
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
     def _handle_train_schedule_created(self, event_data):
         self.service.create_schedule(

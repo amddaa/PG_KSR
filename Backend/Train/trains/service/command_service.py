@@ -6,7 +6,7 @@ from rest_framework.utils import json
 
 from ..events.event_handler import TrainEventHandler
 from ..repository.event_repository import TrainEventRepository
-from ..events.event_types import TrainEventType, TrainEventStreamName
+from ..events.event_types import TrainEventType, TrainEventBrokerNames
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 class TrainCommandService:
     def __init__(self):
+        self.stream_name = TrainEventBrokerNames.TRAIN_EVENT_STREAM_NAME.value
         self.event_repository = TrainEventRepository()
         self.event_handler = TrainEventHandler()
-        self.stream_name = str(TrainEventStreamName.TRAIN_EVENT_STREAM_NAME)
 
     def get_current_train_schedules(self):
         events = self.event_repository.read_events(self.stream_name)
@@ -100,7 +100,7 @@ class TrainCommandService:
         event_data['timestamp'] = datetime.utcnow().isoformat()
         success = self.event_repository.append_event(stream_name, event_type, event_data)
         if success:
-            self.event_handler.publish_event(stream_name, event_type, event_data)
+            self.event_handler.publish_event(event_type, event_data)
 
     def create_train_schedule(self, train_number, departure_time, arrival_time):
         event_data = {

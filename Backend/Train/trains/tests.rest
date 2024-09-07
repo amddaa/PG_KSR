@@ -11,8 +11,8 @@ POST http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
-    "train_number": "1234567",
-    "departure_time": "2025-11-03T10:00:00+00:00",
+    "train_number": "6",
+    "departure_time": "2026-11-03T10:00:00+00:00",
     "arrival_time": "2026-11-04T14:00:00+00:00"
 }
 
@@ -21,7 +21,7 @@ PUT http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
-    "train_number": "123457",
+    "train_number": "1234567",
     "departure_time": "2025-11-03T10:00:00+00:00",
     "arrival_time": "2026-11-04T14:00:00+00:00",
     "old_departure_time": "2025-11-03T10:00:00+00:00",
