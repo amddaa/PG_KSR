@@ -6,6 +6,7 @@ class TrainScheduleSerializer(serializers.Serializer):
     train_number = serializers.CharField(max_length=100)
     departure_time = serializers.DateTimeField()
     arrival_time = serializers.DateTimeField()
+    version = serializers.IntegerField(required=False)
 
     def validate(self, data):
         if data['departure_time'] >= data['arrival_time']:

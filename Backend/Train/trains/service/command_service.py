@@ -95,22 +95,23 @@ class TrainCommandService:
 
         return True
 
-    def _save_to_eventstore_and_publish_event(self, stream_name, event_type, event_data):
+    def _save_to_eventstore_and_publish_event(self, stream_name, event_type, event_data, expected_version):
         event_data['event_id'] = str(uuid.uuid4())
         event_data['timestamp'] = datetime.utcnow().isoformat()
-        success = self.event_repository.append_event(stream_name, event_type, event_data)
+        success = self.event_repository.append_event(stream_name, event_type, event_data, expected_version)
         if success:
             self.event_handler.publish_event(event_type, event_data)
+        return success
 
-    def create_train_schedule(self, train_number, departure_time, arrival_time):
+    def create_train_schedule(self, train_number, departure_time, arrival_time, expected_version):
         event_data = {
             "train_number": train_number,
             "departure_time": departure_time.isoformat(),
             "arrival_time": arrival_time.isoformat(),
         }
-        self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_CREATED.value, event_data)
+        return self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_CREATED.value, event_data, expected_version)
 
-    def update_train_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time):
+    def update_train_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time, expected_version):
         event_data = {
             "train_number": train_number,
             "departure_time": new_departure_time.isoformat(),
@@ -118,5 +119,5 @@ class TrainCommandService:
             "old_departure_time": old_departure_time.isoformat(),
             "old_arrival_time": old_arrival_time.isoformat(),
         }
-        self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_UPDATED.value, event_data)
+        return self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_UPDATED.value, event_data, expected_version)
 

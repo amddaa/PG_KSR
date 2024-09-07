@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
+from .events.event_types import TrainEventBrokerNames
 from .repository.read_repository import TrainReadRepository
 from .serializers import TrainScheduleSerializer
 from .service.command_service import TrainCommandService
@@ -33,13 +34,22 @@ def train_schedules(request):
                 train_number = data.get('train_number')
                 departure_time = data.get('departure_time')
                 arrival_time = data.get('arrival_time')
+                expected_version = int(request.data.get('version'))
+
+                if not expected_version:
+                    return Response(
+                        {'error': 'Version is required.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
                 service = TrainCommandService()
                 if not service.can_add_new_schedule(train_number, departure_time, arrival_time):
                     return Response({'error': 'A train schedule for this train number already exists in the specified '
                                               'time window.'}, status=status.HTTP_409_CONFLICT)
 
-                service.create_train_schedule(train_number, departure_time, arrival_time)
+                if not service.create_train_schedule(train_number, departure_time, arrival_time, expected_version):
+                    return Response({'error': 'Failed to create train schedule. Please try again later.'},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -52,9 +62,14 @@ def train_schedules(request):
                 train_number = data.get('train_number')
                 new_departure_time = data.get('departure_time')
                 new_arrival_time = data.get('arrival_time')
-
+                expected_version = int(request.data.get('version'))
                 old_departure_time = datetime.fromisoformat(request.data.get('old_departure_time'))
                 old_arrival_time = datetime.fromisoformat(request.data.get('old_arrival_time'))
+
+                if not expected_version:
+                    return Response(
+                        {'error': 'Version is required.'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
                 if not old_departure_time or not old_arrival_time:
                     return Response(
@@ -67,8 +82,12 @@ def train_schedules(request):
                     return Response({'error': 'The train schedule update cannot be made.'},
                                     status=status.HTTP_400_BAD_REQUEST)
 
-                service.update_train_schedule(train_number, old_departure_time, old_arrival_time, new_departure_time,
-                                              new_arrival_time)
+                if not service.update_train_schedule(train_number, old_departure_time, old_arrival_time,
+                                                     new_departure_time,
+                                                     new_arrival_time, expected_version):
+                    return Response({'error': 'Failed to update train schedule. Please try again later.'},
+                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -80,3 +99,17 @@ def train_schedules(request):
 @api_view(['GET'])
 def get_train_detail(request, pk):
     pass
+
+
+@api_view(['GET'])
+def get_stream_version(request):
+    try:
+        service = TrainCommandService()
+        version = service.event_repository.get_stream_version(TrainEventBrokerNames.TRAIN_EVENT_STREAM_NAME.value)
+
+        if version is not None:
+            return Response({"version": version}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Unable to retrieve version."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
