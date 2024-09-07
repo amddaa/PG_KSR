@@ -1,4 +1,4 @@
-from esdbclient import EventStoreDBClient, NewEvent, RecordedEvent
+from esdbclient import EventStoreDBClient, NewEvent, StreamState
 from django.conf import settings
 from esdbclient.exceptions import WrongCurrentVersion
 from rest_framework.utils import json
@@ -16,6 +16,9 @@ class TrainEventRepository:
         try:
             event_data_bytes = json.dumps(event_data).encode('utf-8')
             event = NewEvent(type=event_type, data=event_data_bytes)
+
+            logger.error(str(expected_version))
+            logger.error(type(expected_version))
             self.esdb_client.append_to_stream(
                 stream_name=stream_name,
                 events=[event],
@@ -41,4 +44,4 @@ class TrainEventRepository:
             self.esdb_client.close()
 
     def get_stream_version(self, stream_name):
-        return self.esdb_client.get_current_version(stream_name)
+        return str(self.esdb_client.get_current_version(stream_name))

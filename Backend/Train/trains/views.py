@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from esdbclient import StreamState
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,8 +10,8 @@ from .repository.read_repository import TrainReadRepository
 from .serializers import TrainScheduleSerializer
 from .service.command_service import TrainCommandService
 from .service.query_service import TrainQueryService
-
-
+import logging
+logger = logging.getLogger(__name__)
 @api_view(['GET'])
 def healthcheck(request):
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
@@ -34,12 +35,15 @@ def train_schedules(request):
                 train_number = data.get('train_number')
                 departure_time = data.get('departure_time')
                 arrival_time = data.get('arrival_time')
-                expected_version = int(request.data.get('version'))
+                expected_version = request.data.get('version')
 
                 if not expected_version:
                     return Response(
                         {'error': 'Version is required.'},
                         status=status.HTTP_400_BAD_REQUEST)
+                logger.error(str(StreamState.NO_STREAM))
+                logger.error(expected_version == str(StreamState.NO_STREAM))
+                expected_version = int(expected_version) if expected_version != str(StreamState.NO_STREAM) else StreamState.NO_STREAM
 
                 service = TrainCommandService()
                 if not service.can_add_new_schedule(train_number, departure_time, arrival_time):
@@ -70,6 +74,8 @@ def train_schedules(request):
                     return Response(
                         {'error': 'Version is required.'},
                         status=status.HTTP_400_BAD_REQUEST)
+
+                expected_version = int(expected_version) if expected_version != str(StreamState.NO_STREAM) else StreamState.NO_STREAM
 
                 if not old_departure_time or not old_arrival_time:
                     return Response(

@@ -15,10 +15,10 @@ POST http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
-    "train_number": "27",
+    "train_number": "123456",
     "departure_time": "2026-11-03T10:00:00+00:00",
     "arrival_time": "2026-11-04T14:00:00+00:00",
-    "version": "22"
+    "version": "0"
 }
 
 ### Update Train Schedule
