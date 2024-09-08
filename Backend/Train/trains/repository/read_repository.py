@@ -2,12 +2,13 @@
 
 class TrainReadRepository:
 
-    def create_schedule(self, train_number, departure_time, arrival_time):
+    def create_schedule(self, train_number, departure_time, arrival_time, max_seats):
         from ..models import TrainScheduleQuery
         TrainScheduleQuery.objects.create(
             train_number=train_number,
             departure_time=departure_time,
-            arrival_time=arrival_time
+            arrival_time=arrival_time,
+            max_seats=max_seats,
         )
 
     def update_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time):

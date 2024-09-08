@@ -16,9 +16,10 @@ Content-Type: application/json
 
 {
     "train_number": "GDA-ELB",
-    "departure_time": "2026-11-03T10:00:00+00:00",
-    "arrival_time": "2026-11-04T14:00:00+00:00",
-    "version": "2"
+    "departure_time": "2026-11-05T10:00:00+00:00",
+    "arrival_time": "2026-11-06T14:00:00+00:00",
+    "max_seats": "60",
+    "version": "0"
 }
 
 ### Update Train Schedule

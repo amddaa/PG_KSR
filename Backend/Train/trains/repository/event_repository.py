@@ -17,8 +17,6 @@ class TrainEventRepository:
             event_data_bytes = json.dumps(event_data).encode('utf-8')
             event = NewEvent(type=event_type, data=event_data_bytes)
 
-            logger.error(str(expected_version))
-            logger.error(type(expected_version))
             self.esdb_client.append_to_stream(
                 stream_name=stream_name,
                 events=[event],

@@ -103,11 +103,12 @@ class TrainCommandService:
             self.event_handler.publish_event(event_type, event_data)
         return success
 
-    def create_train_schedule(self, train_number, departure_time, arrival_time, expected_version):
+    def create_train_schedule(self, train_number, departure_time, arrival_time, max_seats, expected_version):
         event_data = {
             "train_number": train_number,
             "departure_time": departure_time.isoformat(),
             "arrival_time": arrival_time.isoformat(),
+            "max_seats": max_seats
         }
         return self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_CREATED.value, event_data, expected_version)
 

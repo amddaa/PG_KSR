@@ -10,8 +10,8 @@ from .repository.read_repository import TrainReadRepository
 from .serializers import TrainScheduleSerializer
 from .service.command_service import TrainCommandService
 from .service.query_service import TrainQueryService
-import logging
-logger = logging.getLogger(__name__)
+
+
 @api_view(['GET'])
 def healthcheck(request):
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
@@ -35,14 +35,14 @@ def train_schedules(request):
                 train_number = data.get('train_number')
                 departure_time = data.get('departure_time')
                 arrival_time = data.get('arrival_time')
+                max_seats = data.get('max_seats')
                 expected_version = request.data.get('version')
 
                 if not expected_version:
                     return Response(
                         {'error': 'Version is required.'},
                         status=status.HTTP_400_BAD_REQUEST)
-                logger.error(str(StreamState.NO_STREAM))
-                logger.error(expected_version == str(StreamState.NO_STREAM))
+
                 expected_version = int(expected_version) if expected_version != str(StreamState.NO_STREAM) else StreamState.NO_STREAM
 
                 service = TrainCommandService()
@@ -50,7 +50,7 @@ def train_schedules(request):
                     return Response({'error': 'A train schedule for this train number already exists in the specified '
                                               'time window.'}, status=status.HTTP_409_CONFLICT)
 
-                if not service.create_train_schedule(train_number, departure_time, arrival_time, expected_version):
+                if not service.create_train_schedule(train_number, departure_time, arrival_time, max_seats, expected_version):
                     return Response({'error': 'Failed to create train schedule. Please try again later.'},
                                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -103,7 +103,7 @@ def train_schedules(request):
 
 
 @api_view(['GET'])
-def get_train_detail(request, pk):
+def get_train_detail(request):
     pass
 
 

@@ -6,12 +6,13 @@ class TrainQueryService:
     def __init__(self, repository: TrainReadRepository):
         self.repository = repository
 
-    def create_schedule(self, train_number, departure_time, arrival_time):
+    def create_schedule(self, train_number, departure_time, arrival_time, max_seats):
         with transaction.atomic():
             self.repository.create_schedule(
                 train_number=train_number,
                 departure_time=departure_time,
-                arrival_time=arrival_time
+                arrival_time=arrival_time,
+                max_seats=max_seats,
             )
 
     def update_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time):

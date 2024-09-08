@@ -86,7 +86,8 @@ class EventProcessor(threading.Thread):
         self.service.create_schedule(
             train_number=event_data.get('train_number'),
             departure_time=datetime.fromisoformat(event_data.get('departure_time')),
-            arrival_time=datetime.fromisoformat(event_data.get('arrival_time'))
+            arrival_time=datetime.fromisoformat(event_data.get('arrival_time')),
+            max_seats=int(event_data.get('max_seats'))
         )
 
     def _handle_train_schedule_updated(self, event_data):
