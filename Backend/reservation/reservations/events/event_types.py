@@ -12,9 +12,8 @@ class TrainEventType(Enum):
 
 class TrainEventBrokerNames(Enum):
     TRAIN_EVENT_ROUTING_KEY = "train-event-routing-key"
-    TRAIN_EVENT_QUEUE_NAME = "train-event-queue"
+    TRAIN_EVENT_QUEUE_NAME = "train-event-reservation-queue"
     TRAIN_EVENT_EXCHANGE_NAME = "train-event-exchange"
-    TRAIN_EVENT_STREAM_NAME = "train-schedule-stream"
 
     def __str__(self):
         return self.value

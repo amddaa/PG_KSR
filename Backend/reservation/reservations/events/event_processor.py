@@ -7,7 +7,7 @@ from django.conf import settings
 from rest_framework.utils import json
 
 from .event_types import TrainEventType, TrainEventBrokerNames
-from ..service.query_service import TrainQueryService
+from ..service.train_service import TrainQueryService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,19 +18,19 @@ class EventProcessor(threading.Thread):
         super().__init__(daemon=True)
         self.service = service
         self.rabbitmq_connection = None
-        self.rabbitmq_channel = None
+        self.rabbitmq_channel_train = None
         try:
             rabbitmq_uri = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}/"
             self.rabbitmq_connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_uri))
-            self.rabbitmq_channel = self.rabbitmq_connection.channel()
-            self.rabbitmq_channel.exchange_declare(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
-                                                   exchange_type='topic',
-                                                   durable=True)
-            self.rabbitmq_channel.queue_declare(queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
-                                                durable=True)
-            self.rabbitmq_channel.queue_bind(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
-                                             queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
-                                             routing_key=TrainEventBrokerNames.TRAIN_EVENT_ROUTING_KEY.value)
+            self.rabbitmq_channel_train = self.rabbitmq_connection.channel()
+            self.rabbitmq_channel_train.exchange_declare(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
+                                                         exchange_type='topic',
+                                                         durable=True)
+            self.rabbitmq_channel_train.queue_declare(queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
+                                                      durable=True)
+            self.rabbitmq_channel_train.queue_bind(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
+                                                   queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
+                                                   routing_key=TrainEventBrokerNames.TRAIN_EVENT_ROUTING_KEY.value)
 
             logger.info("EventProcessor initialized successfully")
         except Exception as e:
@@ -39,17 +39,17 @@ class EventProcessor(threading.Thread):
     def run(self):
         try:
             logger.info("EventProcessor starting to consume events")
-            self.rabbitmq_channel.basic_consume(
+            self.rabbitmq_channel_train.basic_consume(
                 queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
                 on_message_callback=self.process_event,
                 auto_ack=False
             )
-            self.rabbitmq_channel.start_consuming()
+            self.rabbitmq_channel_train.start_consuming()
         except Exception as e:
             logger.error(f"Exception in EventProcessor: {e}")
         finally:
-            if self.rabbitmq_channel:
-                self.rabbitmq_channel.close()
+            if self.rabbitmq_channel_train:
+                self.rabbitmq_channel_train.close()
             if self.rabbitmq_connection:
                 self.rabbitmq_connection.close()
             logger.info("EventProcessor stopped")
@@ -71,9 +71,9 @@ class EventProcessor(threading.Thread):
             if event_type == TrainEventType.TRAIN_SCHEDULE_CREATED:
                 self._handle_train_schedule_created(event_data)
             elif event_type == TrainEventType.TRAIN_SCHEDULE_UPDATED:
-                self._handle_train_schedule_updated(event_data)
+                logger.warning(f"I'm not handling this event: {event_type}")
             elif event_type == TrainEventType.TRAIN_SCHEDULE_DELETED:
-                self._handle_train_schedule_deleted(event_data)
+                logger.warning(f"I'm not handling this event: {event_type}")
             else:
                 logger.warning(f"Unknown event type: {event_type}")
 
@@ -83,25 +83,13 @@ class EventProcessor(threading.Thread):
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
     def _handle_train_schedule_created(self, event_data):
-        self.service.create_schedule(
-            train_number=event_data.get('train_number'),
-            departure_time=datetime.fromisoformat(event_data.get('departure_time')),
-            arrival_time=datetime.fromisoformat(event_data.get('arrival_time')),
-            max_seats=int(event_data.get('max_seats'))
-        )
-
-    def _handle_train_schedule_updated(self, event_data):
-        self.service.update_schedule(
-            train_number=event_data.get('train_number'),
-            old_departure_time=datetime.fromisoformat(event_data.get('old_departure_time')),
-            old_arrival_time=datetime.fromisoformat(event_data.get('old_arrival_time')),
-            new_departure_time=datetime.fromisoformat(event_data.get('departure_time')),
-            new_arrival_time=datetime.fromisoformat(event_data.get('arrival_time'))
-        )
-
-    def _handle_train_schedule_deleted(self, event_data):
-        self.service.delete_schedule(
-            train_number=event_data.get('train_number'),
-            departure_time=datetime.fromisoformat(event_data.get('departure_time')),
-            arrival_time=datetime.fromisoformat(event_data.get('arrival_time'))
-        )
+        try:
+            self.service.create_schedule(
+                train_number=event_data.get('train_number'),
+                departure_time=datetime.fromisoformat(event_data.get('departure_time')),
+                arrival_time=datetime.fromisoformat(event_data.get('arrival_time')),
+                max_seats=int(event_data.get('max_seats'))
+            )
+        except Exception as e:
+            logger.error(f"Failed to create train schedule: {e}")
+            raise

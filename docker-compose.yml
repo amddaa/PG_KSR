@@ -39,7 +39,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      eventstore:
+      eventstore_train:
         condition: service_started
       db_train:
         condition: service_started
@@ -53,6 +53,69 @@ services:
     ports:
       - "5433:5432"
         
+  eventstore_train:
+    image: eventstore/eventstore:24.6
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+    ports:
+      - "2113:2113"
+    volumes:
+      - type: volume
+        source: eventstore-train-volume-data
+        target: /var/lib/eventstore
+      - type: volume
+        source: eventstore-train-volume-logs
+        target: /var/log/eventstore    
+  
+  reservation:
+    build:
+      context: ./Backend/reservation/
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn reservation.wsgi:application --bind 0.0.0.0:8001"
+    env_file:
+      - ./Backend/reservation/.env
+    volumes:
+      - static_volume:/app/staticfiles
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      eventstore_reservation:
+        condition: service_started
+      db_reservation:
+        condition: service_started
+        
+  db_reservation:
+    image: postgres:16
+    volumes:
+      - db_reservation_data:/var/lib/postgresql/data
+    env_file:
+      - ./PostgresReservation/.env.dev      
+    ports:
+      - "5434:5432"
+        
+  eventstore_reservation:
+    image: eventstore/eventstore:24.6
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+    ports:
+      - "2114:2113"
+    volumes:
+      - type: volume
+        source: eventstore-reservation-volume-data
+        target: /var/lib/eventstore
+      - type: volume
+        source: eventstore-reservation-volume-logs
+        target: /var/log/eventstore          
+  
   pgadmin:
     image: dpage/pgadmin4:latest
     ports:
@@ -89,31 +152,15 @@ services:
       retries: 5
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      
-  eventstore:
-    image: eventstore/eventstore:24.6
-    environment:
-      - EVENTSTORE_CLUSTER_SIZE=1
-      - EVENTSTORE_RUN_PROJECTIONS=All
-      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
-      - EVENTSTORE_HTTP_PORT=2113
-      - EVENTSTORE_INSECURE=true
-      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
-    ports:
-      - "2113:2113"
-    volumes:
-      - type: volume
-        source: eventstore-volume-data
-        target: /var/lib/eventstore
-      - type: volume
-        source: eventstore-volume-logs
-        target: /var/log/eventstore
 
 volumes:
   db_user_data:
   pgadmin_data:
   static_volume:
-  eventstore-volume-data:
-  eventstore-volume-logs:
+  eventstore-train-volume-data:
+  eventstore-train-volume-logs:
+  eventstore-reservation-volume-data:
+  eventstore-reservation-volume-logs:
   db_train_data:
+  db_reservation_data:
   rabbitmq_data:

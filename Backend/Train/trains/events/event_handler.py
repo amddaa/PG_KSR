@@ -13,7 +13,7 @@ class TrainEventHandler:
         self.rabbitmq_connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_uri))
         self.rabbitmq_channel = self.rabbitmq_connection.channel()
         self.rabbitmq_channel.exchange_declare(exchange=TrainEventBrokerNames.TRAIN_EVENT_EXCHANGE_NAME.value,
-                                               exchange_type='direct',
+                                               exchange_type='topic',
                                                durable=True)
         self.rabbitmq_channel.queue_declare(queue=TrainEventBrokerNames.TRAIN_EVENT_QUEUE_NAME.value,
                                             durable=True)
