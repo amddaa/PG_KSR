@@ -53,3 +53,19 @@ export const logoutUser = async () => {
     }
 };
 
+export const verifyToken = async () => {
+    try {
+        const response = await fetch(process.env.URL + '/api/user/auth/token/verify/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        return response.ok;
+    } catch (error) {
+        console.error('Failed to verify token:', error);
+        return false;
+    }
+};

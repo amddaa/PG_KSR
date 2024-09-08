@@ -75,7 +75,7 @@ services:
   reservation:
     build:
       context: ./Backend/reservation/
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn reservation.wsgi:application --bind 0.0.0.0:8001"
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn reservation.wsgi:application --bind 0.0.0.0:8002"
     env_file:
       - ./Backend/reservation/.env
     volumes:

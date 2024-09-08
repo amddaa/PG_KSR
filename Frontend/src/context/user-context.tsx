@@ -56,12 +56,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({children}) => {
         }
     };
 
-    useEffect(() => {
-        if (isLoggedIn) {
-            router.push('/profile');
-        }
-    }, [isLoggedIn, router]);
-
     return (
         <UserContext.Provider value={{isLoggedIn, login, logout}}>
             {children}

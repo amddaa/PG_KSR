@@ -13,8 +13,8 @@ from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer, TokenVerifySerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView, TokenVerifyView
 
 from .models import CustomUser
 from .serializers import UserSerializer
@@ -124,6 +124,10 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 class CookieTokenRefreshView(TokenRefreshView):
     def finalize_response(self, request, response, *args, **kwargs):
+        print(f"Request Method: {request.method}")
+        print(f"Request Headers: {dict(request.headers)}")
+        print(f"Request Cookies: {request.COOKIES}")
+        print(f"Request Body: {request.body.decode('utf-8')}")
         if response.data.get('refresh'):
             cookie_max_age = 3600 * 24 * 14
             response.set_cookie('refresh', response.data['refresh'], max_age=cookie_max_age, httponly=True)
@@ -146,3 +150,25 @@ class CookieTokenBlacklistSerializer(TokenBlacklistSerializer):
 
 class CookieTokenBlacklistView(TokenBlacklistView):
     serializer_class = CookieTokenBlacklistSerializer
+
+
+class CookieTokenVerifySerializer(TokenVerifySerializer):
+    def validate(self, attrs):
+        refresh_token = self.context['request'].COOKIES.get('refresh')
+        print(f"Refresh token from cookies: {refresh_token}")  # Debugging line
+        attrs['refresh'] = refresh_token
+        if refresh_token:
+            return super().validate(attrs)
+        else:
+            raise InvalidToken('No valid token found in cookie \'refresh\'')
+
+
+class CookieTokenVerifyView(TokenVerifyView):
+    serializer_class = CookieTokenVerifySerializer
+
+    def post(self, request, *args, **kwargs):
+        print(f"Request Method: {request.method}")
+        print(f"Request Headers: {dict(request.headers)}")
+        print(f"Request Cookies: {request.COOKIES}")
+        print(f"Request Body: {request.body.decode('utf-8')}")
+        return super().post(request, *args, **kwargs)
