@@ -100,6 +100,7 @@ class TrainCommandService:
         event_data['timestamp'] = datetime.utcnow().isoformat()
         success = self.event_repository.append_event(stream_name, event_type, event_data, expected_version)
         if success:
+            event_data['expected_version'] = str(expected_version)  # propagation for other microservices
             self.event_handler.publish_event(event_type, event_data)
         return success
 

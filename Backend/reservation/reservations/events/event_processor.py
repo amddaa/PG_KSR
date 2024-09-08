@@ -4,6 +4,7 @@ import pika
 import threading
 import logging
 from django.conf import settings
+from esdbclient import StreamState
 from rest_framework.utils import json
 
 from .event_types import TrainEventType, TrainEventBrokerNames
@@ -84,12 +85,18 @@ class EventProcessor(threading.Thread):
 
     def _handle_train_schedule_created(self, event_data):
         try:
+            expected_version = int(event_data.get('expected_version')) if event_data.get('expected_version') != str(
+                StreamState.NO_STREAM) else StreamState.NO_STREAM
+
             self.service.create_schedule(
                 train_number=event_data.get('train_number'),
                 departure_time=datetime.fromisoformat(event_data.get('departure_time')),
                 arrival_time=datetime.fromisoformat(event_data.get('arrival_time')),
-                max_seats=int(event_data.get('max_seats'))
+                max_seats=int(event_data.get('max_seats')),
+                expected_version=expected_version,
             )
+
+            logger.info(f"Successfully created train schedule: {event_data.get('train_number')}")
         except Exception as e:
             logger.error(f"Failed to create train schedule: {e}")
             raise

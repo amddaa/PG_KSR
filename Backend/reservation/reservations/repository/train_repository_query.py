@@ -1,4 +1,4 @@
-class TrainRepository:
+class TrainRepositoryQuery:
 
     def create_schedule(self, train_number, departure_time, arrival_time, max_seats):
         from ..models import TrainScheduleQuery
