@@ -24,7 +24,14 @@ class CommandService:
         reservations = {}
 
         for event in events:
-            reservation = ReservationCommand.data_to_obj(json.loads(event.data))
+            event_data = json.loads(event.data)
+            event_data['departure_time'] = event_data['arrival_time']  # TODO, just add it somewhere and save
+            logger.error(event_data)
+            logger.error(event_data.get('arrival_time'))
+            logger.error(datetime.fromisoformat(event_data.get('arrival_time')))
+            logger.error(event_data.get('departure_time'))
+            logger.error(datetime.fromisoformat(event_data.get('departure_time')))
+            reservation = ReservationCommand.data_to_obj(event_data)
 
             if event.type == EventType.TRAIN_RESERVED.value:
                 reservations[(reservation.train_number, reservation.arrival_time)] = reservations.get((reservation.train_number, reservation.arrival_time), 0)
@@ -52,16 +59,18 @@ class CommandService:
         return reservations
 
     def can_add_new_reservation(self, reservation):
-        current_reservation = self.get_current_reservations()
-
         if reservation.reserved_seats > 10:
-            logger.error("Can't add new reservation with too many seats")
+            logger.error("Can't add new reservation with 10 or more seats")
             return False
 
         trains_and_max_seats = TrainQueryService.get_trains_with_max_seats(self.event_repository)
         if (reservation.train_number, reservation.arrival_time) not in trains_and_max_seats:
             logger.error("Can't find this train in propagated eventstore")
             return False
+
+        current_reservation = self.get_current_reservations()
+        if not current_reservation:
+            return True
 
         new_reservations = current_reservation[(reservation.train_number, reservation.arrival_time)] + reservation.reserved_seats
         max_seats = trains_and_max_seats[(reservation.train_number, reservation.arrival_time)]
@@ -128,8 +137,9 @@ class CommandService:
     #     }
     #     return self._save_to_eventstore_and_publish_event(self.stream_name, TrainEventType.TRAIN_SCHEDULE_UPDATED.value, event_data, expected_version)
 
-    def send_status_to_query_db_if_failed(self, event_type, event_data):
+    def send_status_to_query_db_if_failed(self, event_type, command):
         try:
+            event_data = command.to_data()
             self.event_handler.publish_event(event_type, event_data)
         except Exception as e:
             logger.error("Couldn't publish status update to DB because of error: {}".format(e))

@@ -89,8 +89,9 @@ class APIEventProcessor(threading.Thread):
                     reservation_command.message = "Version is required"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        event_data=reservation_command
+                        command=reservation_command
                     )
+                    return
 
                 expected_version = int(expected_version) if expected_version != str(
                     StreamState.NO_STREAM) else StreamState.NO_STREAM
@@ -99,8 +100,9 @@ class APIEventProcessor(threading.Thread):
                     reservation_command.message = "Could not add new reservation due to logic conflicts"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        event_data=reservation_command
+                        command=reservation_command
                     )
+                    return
 
                 if not self.service.create_train_reservation(
                         reservation_command,
@@ -110,8 +112,9 @@ class APIEventProcessor(threading.Thread):
                     reservation_command.message = "Failed to create train schedule. Please try again later"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        event_data=reservation_command
+                        command=reservation_command
                     )
+                    return
 
             logger.info(f"Successfully created train schedule: {event_data.get('train_number')}")
         except Exception as e:
