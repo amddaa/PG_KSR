@@ -7,14 +7,14 @@ from django.conf import settings
 from esdbclient import StreamState
 from rest_framework.utils import json
 
-from .event_types import TrainEventType, TrainEventBrokerNames
+from .train_event_types import TrainEventType, TrainEventBrokerNames
 from ..service.train_service import TrainQueryService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class EventProcessor(threading.Thread):
+class TrainEventProcessor(threading.Thread):
     def __init__(self, service: TrainQueryService):
         super().__init__(daemon=True)
         self.service = service

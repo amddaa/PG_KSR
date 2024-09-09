@@ -124,10 +124,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 class CookieTokenRefreshView(TokenRefreshView):
     def finalize_response(self, request, response, *args, **kwargs):
-        print(f"Request Method: {request.method}")
-        print(f"Request Headers: {dict(request.headers)}")
-        print(f"Request Cookies: {request.COOKIES}")
-        print(f"Request Body: {request.body.decode('utf-8')}")
         if response.data.get('refresh'):
             cookie_max_age = 3600 * 24 * 14
             response.set_cookie('refresh', response.data['refresh'], max_age=cookie_max_age, httponly=True)
@@ -155,7 +151,6 @@ class CookieTokenBlacklistView(TokenBlacklistView):
 class CookieTokenVerifySerializer(TokenVerifySerializer):
     def validate(self, attrs):
         refresh_token = self.context['request'].COOKIES.get('refresh')
-        print(f"Refresh token from cookies: {refresh_token}")  # Debugging line
         attrs['refresh'] = refresh_token
         if refresh_token:
             return super().validate(attrs)
@@ -167,8 +162,4 @@ class CookieTokenVerifyView(TokenVerifyView):
     serializer_class = CookieTokenVerifySerializer
 
     def post(self, request, *args, **kwargs):
-        print(f"Request Method: {request.method}")
-        print(f"Request Headers: {dict(request.headers)}")
-        print(f"Request Cookies: {request.COOKIES}")
-        print(f"Request Body: {request.body.decode('utf-8')}")
         return super().post(request, *args, **kwargs)

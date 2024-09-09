@@ -1,3 +1,21 @@
 ### Healthcheck
 GET http://127.0.0.1:80/api/reservations/health/
 Accept: application/json
+
+### Version
+GET http://127.0.0.1:80/api/reservations/version/
+Accept: application/json
+
+### Reserve train
+POST http://127.0.0.1:80/api/reservations/
+Content-Type: application/json
+
+{
+    "train_number": "GDA-WAW",
+    "departure_time": "2026-11-05T10:00:00+00:00",
+    "arrival_time": "2026-11-06T14:00:00+00:00",
+    "reserved_seats": "2",
+    "version": "StreamState.NO_STREAM"
+}
+
+### "operation_id": "9b121231-2c17-4ff2-bef2-8506ada82ecf"

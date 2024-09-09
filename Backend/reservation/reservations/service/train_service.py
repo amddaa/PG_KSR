@@ -1,10 +1,11 @@
+import json
 import logging
 import uuid
 from datetime import datetime
 
 from django.db import transaction, DatabaseError
 
-from ..events.event_types import TrainEventBrokerNames, TrainEventType
+from ..events.train_event_types import TrainEventBrokerNames, TrainEventType
 from ..repository.event_repository import EventRepository
 from ..repository.train_repository_query import TrainRepositoryQuery
 
@@ -48,3 +49,25 @@ class TrainQueryService:
 
         if not success:
             raise Exception("Failed to create train schedule")
+
+    @staticmethod
+    def get_trains_with_max_seats(event_repository: EventRepository):
+        from ..models import TrainScheduleQuery
+        events = event_repository.read_events(TrainEventBrokerNames.TRAIN_EVENT_STREAM_NAME)
+        trains_with_seats = {}
+
+        for event in events:
+            event_data = json.loads(event.data)
+            train_schedule = TrainScheduleQuery.data_to_obj(event_data)
+
+            if event.type == TrainEventType.TRAIN_SCHEDULE_CREATED.value:
+                trains_with_seats[(train_schedule.train_number, train_schedule.arrival_time)] = trains_with_seats.get((train_schedule.train_number, train_schedule.arrival_time), 0)
+                trains_with_seats[(train_schedule.train_number, train_schedule.arrival_time)] = train_schedule.max_seats
+
+            elif event.type == TrainEventType.TRAIN_SCHEDULE_UPDATED.value:
+                raise NotImplementedError
+
+            elif event.type == TrainEventType.TRAIN_SCHEDULE_DELETED.value:
+                raise NotImplementedError
+
+        return trains_with_seats
