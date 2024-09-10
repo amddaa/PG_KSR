@@ -1,3 +1,5 @@
+import logging
+
 import pika
 import uuid
 from django.conf import settings
@@ -5,6 +7,9 @@ from rest_framework.utils import json
 from datetime import datetime
 
 from .event_types import EventBrokerNames
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class EventHandler:
@@ -22,25 +27,28 @@ class EventHandler:
                                          routing_key=EventBrokerNames.TRAIN_RESERVATION_EVENT_ROUTING_KEY.value)
 
     def publish_event(self, event_type, event_data):
-        event_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        try:
+            event_id = str(uuid.uuid4())
+            timestamp = datetime.utcnow().isoformat()
 
-        message = {
-            'event_id': event_id,
-            'event_type': event_type,
-            'data': event_data,
-            'timestamp': timestamp,
-        }
+            message = {
+                'event_id': event_id,
+                'event_type': event_type,
+                'data': event_data,
+                'timestamp': timestamp,
+            }
 
-        if not self.rabbitmq_channel.is_open:
-            self.rabbitmq_channel = self.rabbitmq_connection.channel()
+            if not self.rabbitmq_channel.is_open:
+                self.rabbitmq_channel = self.rabbitmq_connection.channel()
 
-        self.rabbitmq_channel.basic_publish(
-            exchange=EventBrokerNames.TRAIN_RESERVATION_EVENT_EXCHANGE_NAME.value,
-            routing_key=EventBrokerNames.TRAIN_RESERVATION_EVENT_ROUTING_KEY.value,
-            body=json.dumps(message),
-            properties=pika.BasicProperties(delivery_mode=2)
-        )
+            self.rabbitmq_channel.basic_publish(
+                exchange=EventBrokerNames.TRAIN_RESERVATION_EVENT_EXCHANGE_NAME.value,
+                routing_key=EventBrokerNames.TRAIN_RESERVATION_EVENT_ROUTING_KEY.value,
+                body=json.dumps(message),
+                properties=pika.BasicProperties(delivery_mode=2)
+            )
+        except Exception as e:
+            logger.error(f"Could not publish event {event_type} to RabbitMQ: {e}")
 
     def close(self):
         if self.rabbitmq_connection:

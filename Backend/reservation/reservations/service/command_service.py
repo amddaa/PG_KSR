@@ -29,7 +29,8 @@ class CommandService:
             reservation = ReservationCommand.data_to_obj(event_data)
 
             if event.type == EventType.TRAIN_RESERVED.value:
-                reservations[(reservation.train_number, reservation.arrival_time)] = reservations.get((reservation.train_number, reservation.arrival_time), 0)
+                reservations[(reservation.train_number, reservation.arrival_time)] = reservations.get(
+                    (reservation.train_number, reservation.arrival_time), 0)
                 reservations[(reservation.train_number, reservation.arrival_time)] += reservation.reserved_seats
 
             elif event.type == EventType.TRAIN_RESERVATION_UPDATED.value:
@@ -65,11 +66,12 @@ class CommandService:
 
         current_reservation = self.get_current_reservations()
         if not current_reservation:
+            logger.error("Can't find this train in current eventstore")
             return True
 
-        new_reservations = current_reservation[(reservation.train_number, reservation.arrival_time)] + reservation.reserved_seats
+        new_reservations = current_reservation.get((reservation.train_number, reservation.arrival_time), 0)
+        new_reservations += reservation.reserved_seats
         max_seats = trains_and_max_seats[(reservation.train_number, reservation.arrival_time)]
-        logger.info(f"reserv {new_reservations}/{max_seats}")
         if new_reservations > max_seats:
             logger.error("Reserved seat number exceeds maximum seats")
             return False
@@ -120,7 +122,8 @@ class CommandService:
 
     def create_train_reservation(self, command, expected_version):
         event_data = command.to_data()
-        return self._save_to_eventstore_and_publish_event(self.stream_name, EventType.TRAIN_RESERVED.value, event_data, expected_version)
+        return self._save_to_eventstore_and_publish_event(self.stream_name, EventType.TRAIN_RESERVED.value, event_data,
+                                                          expected_version)
 
     # def update_train_schedule(self, train_number, old_departure_time, old_arrival_time, new_departure_time, new_arrival_time, expected_version):
     #     event_data = {
