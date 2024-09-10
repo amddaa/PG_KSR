@@ -15,10 +15,10 @@ POST http://127.0.0.1:80/api/trains/
 Content-Type: application/json
 
 {
-    "train_number": "OLS-KRA",
+    "train_number": "WAR-GDA",
     "departure_time": "2026-11-05T10:00:00+00:00",
     "arrival_time": "2026-11-06T14:00:00+00:00",
-    "max_seats": "5",
+    "max_seats": "15",
     "version": "0"
 }
 

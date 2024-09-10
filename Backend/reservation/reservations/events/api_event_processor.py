@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pika
 import threading
 import logging
@@ -93,6 +95,8 @@ class APIEventProcessor(threading.Thread):
                     )
                     return
 
+                logger.error("passed expected version")
+
                 expected_version = int(expected_version) if expected_version != str(
                     StreamState.NO_STREAM) else StreamState.NO_STREAM
                 if not self.service.can_add_new_reservation(reservation_command):
@@ -103,6 +107,8 @@ class APIEventProcessor(threading.Thread):
                         command=reservation_command
                     )
                     return
+
+                logger.error("passed can add new reservation")
 
                 if not self.service.create_train_reservation(
                         reservation_command,

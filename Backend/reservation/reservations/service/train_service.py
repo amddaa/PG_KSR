@@ -53,11 +53,12 @@ class TrainQueryService:
     @staticmethod
     def get_trains_with_max_seats(event_repository: EventRepository):
         from ..models import TrainScheduleQuery
-        events = event_repository.read_events(TrainEventBrokerNames.TRAIN_EVENT_STREAM_NAME)
+        events = event_repository.read_events(TrainEventBrokerNames.TRAIN_EVENT_STREAM_NAME.value)
         trains_with_seats = {}
 
         for event in events:
             event_data = json.loads(event.data)
+            event_data['departure_time'] = event_data['arrival_time']  # TODO, just add it somewhere and save
             train_schedule = TrainScheduleQuery.data_to_obj(event_data)
 
             if event.type == TrainEventType.TRAIN_SCHEDULE_CREATED.value:

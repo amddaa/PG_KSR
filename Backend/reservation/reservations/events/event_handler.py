@@ -32,6 +32,9 @@ class EventHandler:
             'timestamp': timestamp,
         }
 
+        if not self.rabbitmq_channel.is_open:
+            self.rabbitmq_channel = self.rabbitmq_connection.channel()
+
         self.rabbitmq_channel.basic_publish(
             exchange=EventBrokerNames.TRAIN_RESERVATION_EVENT_EXCHANGE_NAME.value,
             routing_key=EventBrokerNames.TRAIN_RESERVATION_EVENT_ROUTING_KEY.value,

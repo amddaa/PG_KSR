@@ -26,16 +26,11 @@ class CommandService:
         for event in events:
             event_data = json.loads(event.data)
             event_data['departure_time'] = event_data['arrival_time']  # TODO, just add it somewhere and save
-            logger.error(event_data)
-            logger.error(event_data.get('arrival_time'))
-            logger.error(datetime.fromisoformat(event_data.get('arrival_time')))
-            logger.error(event_data.get('departure_time'))
-            logger.error(datetime.fromisoformat(event_data.get('departure_time')))
             reservation = ReservationCommand.data_to_obj(event_data)
 
             if event.type == EventType.TRAIN_RESERVED.value:
                 reservations[(reservation.train_number, reservation.arrival_time)] = reservations.get((reservation.train_number, reservation.arrival_time), 0)
-                reservations[(reservation.train_number, reservation.arrival_time)] = reservation.reserved_seats
+                reservations[(reservation.train_number, reservation.arrival_time)] += reservation.reserved_seats
 
             elif event.type == EventType.TRAIN_RESERVATION_UPDATED.value:
                 raise NotImplementedError
@@ -74,6 +69,7 @@ class CommandService:
 
         new_reservations = current_reservation[(reservation.train_number, reservation.arrival_time)] + reservation.reserved_seats
         max_seats = trains_and_max_seats[(reservation.train_number, reservation.arrival_time)]
+        logger.info(f"reserv {new_reservations}/{max_seats}")
         if new_reservations > max_seats:
             logger.error("Reserved seat number exceeds maximum seats")
             return False
@@ -118,7 +114,6 @@ class CommandService:
         event_data['is_finished'] = str(True)
         success = self.event_repository.append_event(stream_name, event_type, event_data, expected_version)
         if success:
-            logger.info("Successfully appended event to eventstore: ", event_data)
             event_data['expected_version'] = str(expected_version)  # propagation for other microservices
             self.event_handler.publish_event(event_type, event_data)
         return success
