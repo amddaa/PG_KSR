@@ -7,6 +7,8 @@ import {TrainSchedule} from "@/app/(trains)/train-models";
 import {fetchTrainSchedules} from "@/lib/trains";
 import {checkReservationServiceHealth} from "@/lib/reservations";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {useUser} from "@/context/user-context";
+import {useRouter} from "next/navigation";
 
 const TrainSchedules = () => {
     const [schedules, setSchedules] = useState<TrainSchedule[]>([]);
@@ -15,7 +17,10 @@ const TrainSchedules = () => {
     const [isReservationServiceUp, setIsReservationServiceUp] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedTrain, setSelectedTrain] = useState<TrainSchedule | null>(null);
-    const [seats, setSeats] = useState<number>(1); // Stan do przechowywania liczby miejsc
+    const [seats, setSeats] = useState<number>(1);
+
+    const {isLoggedIn} = useUser();
+    const router = useRouter();
 
     useEffect(() => {
         const getSchedules = async () => {
@@ -34,9 +39,13 @@ const TrainSchedules = () => {
     }, []);
 
     const openModal = (schedule: TrainSchedule) => {
-        setSelectedTrain(schedule);
-        setSeats(1);
-        setIsModalOpen(true);
+        if (!isLoggedIn) {
+            router.push('/login');
+        } else {
+            setSelectedTrain(schedule);
+            setSeats(1);
+            setIsModalOpen(true);
+        }
     };
 
     const closeModal = () => {
