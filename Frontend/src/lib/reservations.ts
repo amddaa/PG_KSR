@@ -44,9 +44,9 @@ export const makeReservation = async (train: TrainSchedule, seats: number, versi
     return response.json();
 };
 
-export const checkReservationStatus = async (operationId: string) => {
+export const checkReservationStatus = async (operationId: string): Promise<any> => {
     const accessToken = localStorage.getItem('accessToken');
-    const response = await fetch('/api/reservations/status/${operationId}', {
+    const response = await fetch(`/api/reservations/status/${operationId}/`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${accessToken}`,

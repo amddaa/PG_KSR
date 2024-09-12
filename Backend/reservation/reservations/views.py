@@ -13,12 +13,30 @@ from django.conf import settings
 from .authenticate import CustomAuthentication
 from .events.event_types import EventBrokerNames, EventType
 from .repository.event_repository import EventRepository
+from .repository.read_repository import ReadRepository
 from .serializers import ReservationSerializer
+from .service.query_service import QueryService
 
 
 @api_view(['GET'])
 def healthcheck(request):
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
+class ReservationStatusView(APIView):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, operation_id):
+        user_id = request.user.id
+        repository = ReadRepository()
+        query_service = QueryService(repository)
+
+        try:
+            reservation_data = query_service.get_reservation_status(user_id, operation_id)
+            return Response(reservation_data, status=200)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=404)
 
 
 class ReservationCommandView(APIView):

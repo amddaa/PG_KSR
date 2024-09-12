@@ -28,7 +28,6 @@ const TrainSchedules = () => {
     const [version, setVersion] = useState<string>('');
     const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
     const [reservationStatus, setReservationStatus] = useState('');
-    const [operationId, setOperationId] = useState<string | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(false);
     const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
     const {isLoggedIn} = useUser();
@@ -60,46 +59,6 @@ const TrainSchedules = () => {
         fetchVersion();
     }, []);
 
-    useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        let timeout: NodeJS.Timeout | null = null;
-
-        if (operationId) {
-            interval = setInterval(async () => {
-                try {
-                    setLoadingStatus(true);
-                    const result = await checkReservationStatus(operationId);
-                    setReservationStatus(result.status);
-                    if (result.status === 'completed') {
-                        clearInterval(interval!);
-                        clearTimeout(timeout!);
-                        setPollingInterval(null);
-                        setPollingTimeout(null);
-                        setOperationId(null);
-                        setIsStatusModalOpen(false);
-                        setLoadingStatus(false);
-                    }
-                } catch (error) {
-                    console.error("Error fetching reservation status", error);
-                }
-            }, 2000);
-
-            timeout = setTimeout(() => {
-                clearInterval(interval!);
-                setPollingInterval(null);
-                setPollingTimeout(null);
-                setOperationId(null);
-                setIsStatusModalOpen(false);
-            }, 180000);
-        }
-
-
-        return () => {
-            if (interval) clearInterval(interval);
-            if (timeout) clearTimeout(timeout);
-        };
-    }, [operationId]);
-
     const openModal = (schedule: TrainSchedule) => {
         if (!isLoggedIn) {
             router.push('/login');
@@ -120,12 +79,50 @@ const TrainSchedules = () => {
             try {
                 const result = await makeReservation(selectedTrain, seats, version);
                 if (result.operation_id) {
-                    setOperationId(result.operation_id);
-                    setPollingInterval(setInterval(() => {
-                        checkReservationStatus(result.operation_id)
-                            .then(status => setReservationStatus(status))
-                            .catch(error => console.error("Error fetching reservation status", error));
+                    if (pollingTimeout) {
+                        clearTimeout(pollingTimeout);
+                    }
+
+                    const startTime = Date.now();
+                    const timeoutDuration = 60000;
+
+                    setPollingInterval(setInterval(async () => {
+                        const elapsedTime = Date.now() - startTime;
+                        if (elapsedTime >= timeoutDuration) {
+                            setReservationStatus("Checking reservation status took too long. Please try again.");
+                            clearInterval(pollingInterval!);
+                            setLoadingStatus(false);
+                            return;
+                        }
+
+                        try {
+                            const status = await checkReservationStatus(result.operation_id);
+                            const {
+                                is_finished,
+                                is_successful,
+                                message
+                            } = status;
+                            setReservationStatus(message);
+
+
+                            if (is_finished) {
+                                clearInterval(pollingInterval!);
+                                setPollingInterval(null);
+                                setLoadingStatus(false);
+                                if (is_successful) {
+                                    // Handle successful reservation
+                                } else {
+                                    // Handle unsuccessful reservation
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Failed to fetch reservation status:", error);
+                            clearInterval(pollingInterval!);
+                            setReservationStatus("Failed to check reservation status.");
+                            setLoadingStatus(false);
+                        }
                     }, 5000));
+
                     setIsStatusModalOpen(true);
                     setLoadingStatus(true);
                 }
@@ -222,7 +219,7 @@ const TrainSchedules = () => {
                                 {loadingStatus ? (
                                     <Loader/>
                                 ) : (
-                                    <p>Status: {reservationStatus ? reservationStatus : "Unknown"}</p>
+                                    <p>{reservationStatus ? reservationStatus : "Unknown"}</p>
                                 )}
                             </div>
                             <DialogFooter>
