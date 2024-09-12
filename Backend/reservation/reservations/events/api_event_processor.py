@@ -87,22 +87,20 @@ class APIEventProcessor(threading.Thread):
                 expected_version = event_data.get('version')
 
                 if not expected_version:
-                    reservation_command.is_finished = False
-                    reservation_command.message = "Version is required"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        command=reservation_command
+                        command=reservation_command,
+                        reason="Version is required"
                     )
                     return
 
                 expected_version = int(expected_version) if expected_version != str(
                     StreamState.NO_STREAM) else StreamState.NO_STREAM
                 if not self.service.can_add_new_reservation(reservation_command):
-                    reservation_command.is_finished = False
-                    reservation_command.message = "Could not add new reservation due to logic conflicts"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        command=reservation_command
+                        command=reservation_command,
+                        reason="Could not add new reservation due to logic conflicts"
                     )
                     return
 
@@ -110,11 +108,10 @@ class APIEventProcessor(threading.Thread):
                         reservation_command,
                         expected_version,
                 ):
-                    reservation_command.is_finished = False
-                    reservation_command.message = "Failed to create train schedule. Please try again later"
                     self.service.send_status_to_query_db_if_failed(
                         event_type=EventType.TRAIN_RESERVATION_FAIL_STATUS_PROPAGATION.value,
-                        command=reservation_command
+                        command=reservation_command,
+                        reason="Failed to create train schedule. Please try again later"
                     )
                     return
 

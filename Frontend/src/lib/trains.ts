@@ -1,4 +1,4 @@
-import {TrainSchedule} from "@/app/(trains)/train-models";
+import {TrainSchedule} from "@/lib/train-models";
 
 export const fetchTrainSchedules = async (): Promise<TrainSchedule[]> => {
     const response = await fetch('/api/trains/', {

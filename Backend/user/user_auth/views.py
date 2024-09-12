@@ -13,7 +13,8 @@ from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer, TokenVerifySerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenBlacklistSerializer, \
+    TokenVerifySerializer, TokenObtainPairSerializer, AuthUser
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenBlacklistView, TokenVerifyView
 
 from .models import CustomUser
@@ -89,7 +90,17 @@ class CookieTokenRefreshSerializer(TokenRefreshSerializer):
             raise InvalidToken('No valid token found in cookie \'refresh\'')
 
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user: AuthUser):
+        token = super().get_token(user)
+        token['user_id'] = user.id
+        return token
+
+
 class CookieTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         username = request.data.get('username')

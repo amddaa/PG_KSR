@@ -40,30 +40,33 @@ class TrainScheduleQuery(models.Model):
 
 class ReservationCommand(models.Model):
     train_number = models.CharField(max_length=255)
-    departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
     reserved_seats = models.PositiveIntegerField()
     operation_id = models.UUIDField()
     is_finished = models.BooleanField(default=False)
+    is_successful = models.BooleanField(default=False)
     message = models.TextField(default="")
+    user_id = models.BigIntegerField()
 
     @staticmethod
     def data_to_obj(data):
         train_number = data.get('train_number')
-        departure_time = datetime.fromisoformat(data.get('departure_time'))
         arrival_time = datetime.fromisoformat(data.get('arrival_time'))
         reserved_seats = int(data.get('reserved_seats'))
         operation_id = data.get('operation_id')
         is_finished = bool(data.get('is_finished'))
+        is_successful = bool(data.get('is_successful'))
         message = data.get('message')
+        user_id = int(data.get('user_id'))
 
         return ReservationCommand(train_number=train_number,
-                                  departure_time=departure_time,
                                   arrival_time=arrival_time,
                                   reserved_seats=reserved_seats,
                                   operation_id=operation_id,
                                   is_finished=is_finished,
-                                  message=message)
+                                  is_successful=is_successful,
+                                  message=message,
+                                  user_id=user_id)
 
     def to_data(self):
         return {
@@ -72,5 +75,7 @@ class ReservationCommand(models.Model):
             "reserved_seats": self.reserved_seats,
             "operation_id": self.operation_id,
             "is_finished": self.is_finished,
-            "message": self.message
+            "is_successful": self.is_successful,
+            "message": self.message,
+            "user_id": self.user_id
         }

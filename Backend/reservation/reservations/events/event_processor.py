@@ -86,12 +86,7 @@ class EventProcessor(threading.Thread):
     def _handle_train_reserved(self, event_data):
         from ..models import ReservationCommand
         try:
-            logger.error(f"Received {event_data}")
-
-            event_data['departure_time'] = event_data['arrival_time']  # TODO...
             command = ReservationCommand.data_to_obj(event_data)
-            command.message = "Success"  # TODO...
-
             self.service.create_schedule(command)
             logger.info(f"Successfully added train reservation: {ReservationCommand.train_number}")
         except Exception as e:
@@ -101,10 +96,7 @@ class EventProcessor(threading.Thread):
     def _handle_train_reservation_fail_status_propagation(self, event_data):
         from ..models import ReservationCommand
         try:
-            event_data['departure_time'] = event_data['arrival_time']  # TODO...
             command = ReservationCommand.data_to_obj(event_data)
-
-            command.message = "Failed"  # TODO...
             self.service.create_schedule(command)
             logger.info(f"Successfully added failed train reservation: {ReservationCommand.train_number}")
         except Exception as e:

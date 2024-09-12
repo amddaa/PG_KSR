@@ -4,11 +4,13 @@ from datetime import datetime
 import pika
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.utils import json
 from rest_framework.views import APIView
 from django.conf import settings
 
+from .authenticate import CustomAuthentication
 from .events.event_types import EventBrokerNames, EventType
 from .repository.event_repository import EventRepository
 from .serializers import ReservationSerializer
@@ -20,6 +22,9 @@ def healthcheck(request):
 
 
 class ReservationCommandView(APIView):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = ReservationSerializer(data=request.data)
 
@@ -30,6 +35,7 @@ class ReservationCommandView(APIView):
             command_data['is_finished'] = False
             command_data['arrival_time'] = command_data['arrival_time'].isoformat()
             command_data['departure_time'] = command_data['departure_time'].isoformat()
+            command_data['user_id'] = request.user.id
             message = {
                 'event_id': operation_id,
                 'event_type': EventType.TRAIN_RESERVED.value,
