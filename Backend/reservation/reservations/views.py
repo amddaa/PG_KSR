@@ -43,6 +43,17 @@ class ReservationCommandView(APIView):
     authentication_classes = [CustomAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user_id = request.user.id
+        repository = ReadRepository()
+        query_service = QueryService(repository)
+
+        try:
+            reservation_data = query_service.get_reservations(user_id)
+            return Response(reservation_data, status=200)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=404)
+
     def post(self, request):
         serializer = ReservationSerializer(data=request.data)
 

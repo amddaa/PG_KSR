@@ -4,6 +4,7 @@ import {useRouter} from 'next/navigation';
 
 interface UserContextType {
     isLoggedIn: boolean;
+    isLoading: boolean;
     login: (credentials: { email: string; username: string; password: string }) => Promise<{
         ok: boolean;
         error?: string
@@ -15,6 +16,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({children}) => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
     const router = useRouter();
 
     useEffect(() => {
@@ -25,6 +27,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({children}) => {
             } catch (error) {
                 console.error('Error refreshing access token:', error);
                 setIsLoggedIn(false);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -57,7 +61,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({children}) => {
     };
 
     return (
-        <UserContext.Provider value={{isLoggedIn, login, logout}}>
+        <UserContext.Provider value={{isLoggedIn, isLoading, login, logout}}>
             {children}
         </UserContext.Provider>
     );

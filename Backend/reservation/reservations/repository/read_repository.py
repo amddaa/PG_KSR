@@ -10,3 +10,10 @@ class ReadRepository:
                     .values('is_finished', 'is_successful', 'message').first())
         except ReservationCommand.DoesNotExist:
             return None
+
+    def get_reservations(self, user_id):
+        from ..models import ReservationCommand
+        try:
+            return ReservationCommand.objects.filter(user_id=user_id, is_finished=True, is_successful=True).all()
+        except ReservationCommand.DoesNotExist:
+            return None

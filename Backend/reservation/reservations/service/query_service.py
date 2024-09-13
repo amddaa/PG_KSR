@@ -16,3 +16,7 @@ class QueryService:
         if not reservation:
             raise ValueError("Reservation not found")
         return reservation
+
+    def get_reservations(self, user_id):
+        reservations = self.repository.get_reservations(user_id)
+        return reservations

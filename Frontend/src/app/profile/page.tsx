@@ -1,12 +1,28 @@
 "use client";
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
+import {useUser} from "@/context/user-context";
 
 const ProfilePage = () => {
+    const {isLoggedIn, isLoading} = useUser();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !isLoggedIn) {
+            router.push('/login');
+        }
+    }, [isLoggedIn, isLoading, router]);
+
+    if (isLoading) {
+        return <p>Loading...</p>;
+    }
+
+    if (!isLoggedIn) {
+        return <p>Redirecting to login...</p>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
