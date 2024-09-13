@@ -26,11 +26,11 @@ const TrainSchedules = () => {
     const [selectedTrain, setSelectedTrain] = useState<TrainSchedule | null>(null);
     const [seats, setSeats] = useState<number>(1);
     const [version, setVersion] = useState<string>('');
-    const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
     const [reservationStatus, setReservationStatus] = useState('');
     const [loadingStatus, setLoadingStatus] = useState(false);
     const [pollingTimeout, setPollingTimeout] = useState<NodeJS.Timeout | null>(null);
     const {isLoggedIn} = useUser();
+    const [intervalId, setIntervalId] = useState<any>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -83,14 +83,18 @@ const TrainSchedules = () => {
                         clearTimeout(pollingTimeout);
                     }
 
-                    const startTime = Date.now();
-                    const timeoutDuration = 60000;
 
-                    setPollingInterval(setInterval(async () => {
+                    const timeoutDuration = 60000;
+                    const timeout = 5000;
+                    const startTime = Date.now();
+
+                    let interval = setInterval(async () => {
+                        setIntervalId(interval!)
                         const elapsedTime = Date.now() - startTime;
                         if (elapsedTime >= timeoutDuration) {
                             setReservationStatus("Checking reservation status took too long. Please try again.");
-                            clearInterval(pollingInterval!);
+                            clearInterval(interval);
+                            setIntervalId(null);
                             setLoadingStatus(false);
                             return;
                         }
@@ -106,8 +110,8 @@ const TrainSchedules = () => {
 
 
                             if (is_finished) {
-                                clearInterval(pollingInterval!);
-                                setPollingInterval(null);
+                                clearInterval(interval);
+                                setIntervalId(null);
                                 setLoadingStatus(false);
                                 if (is_successful) {
                                     // Handle successful reservation
@@ -117,11 +121,12 @@ const TrainSchedules = () => {
                             }
                         } catch (error) {
                             console.error("Failed to fetch reservation status:", error);
-                            clearInterval(pollingInterval!);
+                            clearInterval(interval);
+                            setIntervalId(null);
                             setReservationStatus("Failed to check reservation status.");
                             setLoadingStatus(false);
                         }
-                    }, 5000));
+                    }, timeout);
 
                     setIsStatusModalOpen(true);
                     setLoadingStatus(true);
@@ -133,6 +138,7 @@ const TrainSchedules = () => {
             }
         }
     };
+
 
     return (
         <div className="container mx-auto">
