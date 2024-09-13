@@ -14,6 +14,8 @@ class ReadRepository:
     def get_reservations(self, user_id):
         from ..models import ReservationCommand
         try:
-            return ReservationCommand.objects.filter(user_id=user_id, is_finished=True, is_successful=True).all()
+            reservations = ReservationCommand.objects.filter(user_id=user_id, is_finished=True, is_successful=True).all()
+            data = [reservation.to_data() for reservation in reservations]
+            return data
         except ReservationCommand.DoesNotExist:
-            return None
+            return []

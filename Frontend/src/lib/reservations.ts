@@ -58,3 +58,18 @@ export const checkReservationStatus = async (operationId: string): Promise<any> 
     }
     return response.json();
 };
+
+export const getReservations = async (): Promise<any> => {
+    const accessToken = localStorage.getItem('accessToken');
+    const response = await fetch(`/api/reservations/`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch reservations");
+    }
+    return response.json();
+};
